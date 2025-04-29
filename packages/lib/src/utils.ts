@@ -1,4 +1,4 @@
-import { Bid, Card, GameState, HandType, Player } from "./types";
+import type { Bid, Card, GameState, HandType, Player } from "./types";
 
 function createDeck(): Card[] {
   const suits = ["hearts", "diamonds", "clubs", "spades"];

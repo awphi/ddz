@@ -1,5 +1,5 @@
 import { getHandType } from "./utils";
-import { Card, HandType } from "./types";
+import type { Card, HandType } from "./types";
 import { describe, expect, it } from "vitest";
 
 describe("getHandType", () => {

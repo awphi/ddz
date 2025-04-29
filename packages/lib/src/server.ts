@@ -1,5 +1,5 @@
 import { EventBus } from "./event-bus";
-import { GameState, Message } from "./types";
+import type { GameState, Message } from "./types";
 import { createGame, isValidBid } from "./utils";
 
 /**
