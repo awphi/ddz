@@ -4,11 +4,13 @@ function createDeck(): Card[] {
   const suits = ["hearts", "diamonds", "clubs", "spades"];
   const deck: Card[] = [];
 
-  for (let rank = 1; rank <= 13; rank++) {
+  for (let rank = 3; rank <= 15; rank++) {
     for (const suit of suits) {
       deck.push({ rank, suit });
     }
   }
+
+  deck.push({ rank: 16, suit: "joker" }, { rank: 16, suit: "joker" });
 
   // shuffle the deck
   for (let i = deck.length - 1; i > 0; i--) {
@@ -130,8 +132,7 @@ export function createGame(playerNames: string[]): GameState {
   for (let i = 0; i < playerNames.length; i++) {
     players.push({
       name: playerNames[i],
-      hand: deck.splice(i * 17, 17), // 17 cards each, 3 left in the deck for the landlord
-      balance: 1000,
+      hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
       moves: [],
       type: "farmer", // default type - someone will be set as the landlord after the auction
       auction: {

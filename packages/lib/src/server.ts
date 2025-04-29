@@ -9,20 +9,16 @@ import { createGame, isValidBid } from "./utils";
 export class DdzServer {
   private _gameState: GameState = undefined!; // gets mutated in place
   private _eventBus: EventBus<{
-    gameStateChanged: (gameState: GameState) => void;
+    gameStateChanged: () => void;
   }> = new EventBus();
 
-  /**
-   * Fires the `gameStateChanged` event with the current game state. Should be called internally
-   * whenever the server host needs to know about state changes (e.g. to notify clients).
-   */
-  private gameStateChanged(): void {
-    this._eventBus.fire("gameStateChanged", this._gameState);
+  public get gameState(): GameState {
+    return this._gameState;
   }
 
   private deal(): void {
     this._gameState = createGame(this._playerNames);
-    this.gameStateChanged();
+    this._eventBus.fire("gameStateChanged");
   }
 
   /**
@@ -102,7 +98,7 @@ export class DdzServer {
       }
     }
 
-    this.gameStateChanged();
+    this._eventBus.fire("gameStateChanged");
   }
 
   on = this._eventBus.on;

@@ -31,7 +31,6 @@ export type Move = Card[] | "pass";
 export interface Player {
   name: string;
   hand: Card[];
-  balance: number;
   moves: Move[];
   type: "landlord" | "farmer";
   auction: {
