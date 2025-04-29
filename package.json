@@ -8,6 +8,7 @@
   "author": "adamwph (admin@adamw.ph)",
   "scripts": {
     "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test"
   },
