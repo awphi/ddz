@@ -1,0 +1,13 @@
+- pnpm monorepo - no top level deps, recursive test, publish and lint commands, `@ddz/server` and `@ddz/app`
+- DdzServer unit tests for code so far
+  - Basic logic: creation of game state, event firing, event listeners, turn timeouts
+  - Auctioning logic: Skipping passed players, max bid storage, bid validation, turn timeout logic, phase advancement/landlord assignment/remaining deck dealing
+- Implement DdzServer play phase - current hand type validation, advancement of play, win condition
+- Tests for DdzServer play phase
+- Environment tests for DdzServer - node and browser
+- Main splash screen for site - choose your mode "local" or "online" (latter coming soon)
+  - Might need router for this as now have 3 pages - splash, local (SPA), online (SPA)
+- "local" mode implementation (pass-the-phone style game)
+  - Just needs a DdzServer, no WebRTC clients etc.
+  - Try to make components semi-reusable for online version
+  - Transition screens - "Pass the phone to XXX [Confirm ->]" to avoid hand-spying
