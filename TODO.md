@@ -1,4 +1,3 @@
-- pnpm monorepo - no top level deps, recursive test, publish and lint commands, `@ddz/server` and `@ddz/app`
 - DdzServer unit tests for code so far
   - Basic logic: creation of game state, event firing, event listeners, turn timeouts
   - Auctioning logic: Skipping passed players, max bid storage, bid validation, turn timeout logic, phase advancement/landlord assignment/remaining deck dealing

@@ -1,0 +1,32 @@
+{
+  "name": "@ddz/lib",
+  "version": "0.1.0",
+  "description": "TS-based library for the game Dou Di Zhu (斗地主) - a popular Chinese card game.",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "keywords": [
+    "ddz",
+    "dou",
+    "dizhu",
+    "landlord",
+    "card",
+    "chinese",
+    "poker",
+    "斗地主"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "author": "adamwph (admin@adamw.ph)",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "vitest",
+    "build": "tsc -b"
+  },
+  "packageManager": "pnpm@10.6.3",
+  "devDependencies": {
+    "typescript": "~5.7.2",
+    "vitest": "^3.1.2"
+  }
+}
