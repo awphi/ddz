@@ -38,6 +38,10 @@ export class DdzServer {
     const state = this._gameState;
     const currentPlayer = state.players[state.currentPlayerIndex];
 
+    if (state.players.some((v) => v.hand.length === 0)) {
+      return;
+    }
+
     if (state.phase === "auction") {
       if (
         message !== null &&
