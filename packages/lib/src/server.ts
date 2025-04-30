@@ -81,7 +81,9 @@ export class DdzServer {
       const landlordIdx: number = state.players.findIndex(
         (v) =>
           v.auction.lastBid === 3 ||
-          (numericBids.length === 1 && v.auction.lastBid !== "pass")
+          (numericBids.length === 1 &&
+            v.auction.lastBid !== "pass" &&
+            v.auction.lastBid > 0)
       );
 
       if (landlordIdx !== -1) {
@@ -97,7 +99,7 @@ export class DdzServer {
           state.currentPlayerIndex =
             (state.currentPlayerIndex + 1) % state.players.length;
         } while (
-          state.players[state.currentPlayerIndex].auction.lastBid !== "pass"
+          state.players[state.currentPlayerIndex].auction.lastBid === "pass"
         );
       }
     }
