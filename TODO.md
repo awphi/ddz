@@ -1,5 +1,4 @@
 - DdzServer unit tests for code so far
-  - Basic logic: event firing, event listeners
   - Auctioning logic: Skipping passed players, max bid storage, bid validation, turn timeout logic, phase advancement/landlord assignment/remaining deck dealing
 - Implement DdzServer play phase - current hand type validation, advancement of play, win condition
 - Tests for DdzServer play phase

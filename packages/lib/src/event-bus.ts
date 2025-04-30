@@ -1,5 +1,5 @@
 export class EventBus<T extends Record<string, (...args: any[]) => void>> {
-  private listeners: { [K in keyof T]?: T[K][] } = {};
+  private listeners: { [K in keyof T]?: T[K][] } = Object.create(null);
 
   on<K extends keyof T>(event: K, callback: T[K]) {
     if (!this.listeners[event]) {

@@ -105,7 +105,7 @@ export class DdzServer {
     this._eventBus.fire("gameStateChanged");
   }
 
-  on = this._eventBus.on;
-  off = this._eventBus.on;
-  once = this._eventBus.on;
+  on = this._eventBus.on.bind(this._eventBus);
+  off = this._eventBus.off.bind(this._eventBus);
+  once = this._eventBus.once.bind(this._eventBus);
 }
