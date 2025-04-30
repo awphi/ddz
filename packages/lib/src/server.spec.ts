@@ -119,6 +119,16 @@ describe("DdzServer", () => {
       expect(server.gameState).not.toEqual(initialGameState);
     });
 
+    it("re-dealing fires a single gameStateChanged event", () => {
+      const server = new DdzServer(["a", "b", "c"]);
+      server.play({ type: "auctionBid", bid: "pass" });
+      server.play({ type: "auctionBid", bid: "pass" });
+      const onSpy = vi.fn();
+      server.on("gameStateChanged", onSpy);
+      server.play({ type: "auctionBid", bid: "pass" });
+      expect(onSpy).toHaveBeenCalledTimes(1);
+    });
+
     it("max bid is stored correctly when a player later passes", () => {
       const server = new DdzServer(["a", "b", "c"]);
       const firstPlayer = server.gameState.currentPlayerIndex;
