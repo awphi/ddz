@@ -1,4 +1,4 @@
-import type { Bid, Card, GameState, HandType, Player } from "./types";
+import type { Bid, Card, GameState, Hand, Player } from "./types";
 
 function createDeck(): Card[] {
   const suits = ["hearts", "diamonds", "clubs", "spades"];
@@ -10,7 +10,7 @@ function createDeck(): Card[] {
     }
   }
 
-  deck.push({ rank: 16, suit: "joker" }, { rank: 16, suit: "joker" });
+  deck.push({ rank: 16, suit: "joker" }, { rank: 17, suit: "joker" });
 
   // shuffle the deck
   for (let i = deck.length - 1; i > 0; i--) {
@@ -29,96 +29,157 @@ export function isValidBid(bid: Bid, otherBids: Bid[]): boolean {
   return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
 }
 
-export function getHandType(cards: Card[]): HandType {
-  if (cards.length === 0) {
-    throw new Error("Hand cannot be empty");
-  }
-
-  const rankCounts: Record<number, number> = {};
+function countCards(cards: Card[]): Record<number, number> {
+  const result: Record<number, number> = {};
   for (const card of cards) {
-    rankCounts[card.rank] = (rankCounts[card.rank] ?? 0) + 1;
+    result[card.rank] = (result[card.rank] ?? 0) + 1;
   }
-  const counts = Object.values(rankCounts);
-  const ranks = Object.keys(rankCounts).map(Number);
+  return result;
+}
 
-  // some shorthand
-  const maxRank = Math.max(...ranks);
-  const nRanks = ranks.length;
+function groupCards(cards: Card[]): Record<number, number[]> {
+  const counts = countCards(cards);
+  const result: Record<number, number[]> = {};
+
+  // result[i] will be sorted by virtue of the keys of the object returned by countCards()
+  // being ordered by JS
+  for (const [rank, count] of Object.entries(counts)) {
+    if (!(count in result)) {
+      result[count] = [];
+    }
+    result[count].push(Number(rank));
+  }
+
+  return result;
+}
+
+function isSequential(arr: number[]): boolean {
+  return arr.every((v, i) => i === 0 || v === arr[i - 1] + 1);
+}
+
+export function identifyHand(cards: Card[]): Hand | null {
+  if (cards.length === 0) {
+    return null;
+  }
+
+  const ranks = countCards(cards); // rank -> # of cards of that rank
+  const uniqueRanks = Object.keys(ranks).map(Number);
+  const groups = groupCards(cards); // # of cards -> list of unique ranks with that group size
+  const uniqueGroups = Object.keys(groups).map(Number);
+  const maxRank = Math.max(...uniqueRanks);
+  const nRanks = Object.keys(ranks).length;
   const nCards = cards.length;
 
   // only a rocket can use both jokers
-  if (rankCounts[16] === 2) {
+  if (ranks[16] === 1 && ranks[17] === 1) {
     if (nCards === 2) {
-      return "rocket";
+      return { type: "rocket", value: maxRank };
     }
 
-    throw new Error("Invalid hand type");
+    return null;
   }
 
   if (nRanks === 1) {
     switch (nCards) {
       case 1:
-        return "single";
+        return { type: "single", value: maxRank };
       case 2:
-        return "pair";
+        return { type: "pair", value: maxRank };
       case 3:
-        return "triplet";
+        return { type: "triplet", value: maxRank };
       case 4:
-        return "bomb";
+        return { type: "bomb", value: maxRank };
     }
   }
 
-  if (nRanks === 2 && counts.includes(3)) {
+  if (nRanks === 2 && groups[3]?.length === 1) {
     if (nCards === 5) {
-      return "tripletWithPair";
+      return { type: "tripletWithPair", value: groups[3][0] };
     }
 
     if (nCards == 4) {
-      return "tripletWithSingle";
+      return { type: "tripletWithSingle", value: groups[3][0] };
     }
   }
 
-  if (ranks.every((rank, i) => i === 0 || rank === ranks[i - 1] + 1)) {
+  if (isSequential(uniqueRanks)) {
+    const minRank = Math.min(...uniqueRanks);
     // twos and jokers cannot be used in a straight or straight of pairs
     if (maxRank <= 14) {
       if (nCards >= 5 && nRanks === nCards) {
-        return "straight";
+        return { type: "straight", value: minRank };
       }
 
-      if (nCards >= 6 && counts.every((v) => v === 2)) {
-        return "straightOfPairs";
+      if (nCards >= 6 && uniqueGroups.length === 1 && uniqueGroups[0] === 2) {
+        return { type: "straightOfPairs", value: minRank };
       }
     }
 
-    if (nCards >= 6 && counts.every((v) => v === 3)) {
-      return "straightOfTriplets";
+    if (nCards >= 6 && uniqueGroups.length === 1 && uniqueGroups[0] === 3) {
+      return { type: "straightOfTriplets", value: minRank };
     }
   }
 
-  const triplets = ranks.filter((_, i) => counts[i] === 3);
-  if (
-    triplets.length >= 2 &&
-    nRanks === triplets.length * 2 &&
-    triplets.every((rank, i) => i === 0 || rank === triplets[i - 1] + 1)
-  ) {
-    if (nCards === triplets.length * 3 + triplets.length) {
-      return "straightOfTripletsWithSingles";
+  const nTriplets = groups[3]?.length ?? 0;
+  if (nTriplets >= 2 && nRanks === nTriplets * 2 && isSequential(groups[3])) {
+    const value = Math.min(...groups[3]);
+    if (nCards === nTriplets * 3 + nTriplets) {
+      return {
+        type: "straightOfTripletsWithSingles",
+        value,
+      };
     }
 
-    if (nCards === triplets.length * 3 + triplets.length * 2) {
-      return "straightOfTripletsWithPairs";
+    if (nCards === nTriplets * 3 + nTriplets * 2) {
+      return { type: "straightOfTripletsWithPairs", value };
     }
   }
 
   if (
     nRanks === 3 &&
-    counts.includes(4) &&
-    (nCards === 6 || (nCards === 8 && counts.includes(2)))
+    groups[4]?.length === 1 &&
+    (groups[1]?.length === 2 || groups[2]?.length === 2) // either two singles or two pairs
   ) {
-    return "quadplexSet";
+    return { type: "quadplexSet", value: groups[4][0] };
   }
 
-  throw new Error("Invalid hand type");
+  return null;
+}
+
+export function canBeatHand(newHand: Card[], previousHand: Card[]): boolean {
+  const newType = identifyHand(newHand);
+  const previousType = identifyHand(previousHand);
+
+  if (newType === null || previousType === null) {
+    return false;
+  }
+
+  // rocket beats all
+  if (newType.type === "rocket") {
+    return true;
+  }
+
+  // bomb beats everything except rocket or a higher bomb
+  if (newType.type === "bomb") {
+    if (previousType.type === "rocket") {
+      return false;
+    }
+
+    if (previousType.type === "bomb") {
+      return newType.value > previousType.value;
+    }
+
+    return true;
+  }
+
+  if (
+    newType.type === previousType.type &&
+    newHand.length === previousHand.length
+  ) {
+    return newType.value > previousType.value;
+  }
+
+  return false;
 }
 
 export function createGame(playerNames: string[]): GameState {

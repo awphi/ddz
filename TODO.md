@@ -1,5 +1,8 @@
 - Implement DdzServer play phase - current hand type validation, advancement of play, win condition
 - Tests for DdzServer play phase
+- Implement DdzServer score ledger
+  - Keep track of who owes who how much based on scoring rules
+  - Emit an event when the ledger is updated
 - Environment tests for DdzServer - node and browser
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)
   - Might need router for this as now have 3 pages - splash, local (SPA), online (SPA)
@@ -7,3 +10,4 @@
   - Just needs a DdzServer, no WebRTC clients etc.
   - Try to make components semi-reusable for online version
   - Transition screens - "Pass the phone to XXX [Confirm ->]" to avoid hand-spying
+  - Motion for neat animations - e.g. use layout animation to move cards from hand, to center, to discard deck as needed

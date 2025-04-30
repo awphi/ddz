@@ -1,28 +1,32 @@
 export interface Card {
-  /* Stored in DDZ priority order in the range [3,16] where: 
+  /* Stored in DDZ priority order in the range [3,17] where: 
     - [3, 14] = [3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A]
     - 15 = 2
-    - 16 = Joker
+    - 16 = Black Joker
+    - 17 = Red Joker
   */
   rank: number;
   suit: string;
 }
 
-// based on https://www.pagat.com/climbing/doudizhu.html#play, listed in order of strength
-export type HandType =
-  | "single"
-  | "pair"
-  | "triplet"
-  | "tripletWithSingle"
-  | "tripletWithPair"
-  | "straight"
-  | "straightOfPairs"
-  | "straightOfTriplets"
-  | "straightOfTripletsWithSingles"
-  | "straightOfTripletsWithPairs"
-  | "quadplexSet"
-  | "bomb"
-  | "rocket";
+export interface Hand {
+  // based on https://www.pagat.com/climbing/doudizhu.html#play, listed in order of strength
+  type:
+    | "single"
+    | "pair"
+    | "triplet"
+    | "tripletWithSingle"
+    | "tripletWithPair"
+    | "straight"
+    | "straightOfPairs"
+    | "straightOfTriplets"
+    | "straightOfTripletsWithSingles"
+    | "straightOfTripletsWithPairs"
+    | "quadplexSet"
+    | "bomb"
+    | "rocket";
+  value: number;
+}
 
 export type Bid = number | "pass";
 
