@@ -1,8 +1,8 @@
-import { createGame, identifyHand } from "./utils";
+import { canBeatHand, createGame, identifyHand } from "./utils";
 import type { Card, GameState, Hand, Player } from "./types";
 import { describe, expect, it } from "vitest";
 
-function makeTestPlayer(name: string, props?: Partial<Player>): Player {
+function createTestPlayer(name: string, props?: Partial<Player>): Player {
   return expect.objectContaining<Player>({
     name,
     auction: {
@@ -16,13 +16,17 @@ function makeTestPlayer(name: string, props?: Partial<Player>): Player {
   });
 }
 
+function createTestCards(
+  ranks: number[],
+  suits: string[] = ["hearts"]
+): Card[] {
+  return ranks.map((rank, i) => ({ rank, suit: suits[i % suits.length] }));
+}
+
 // TODO update to deal with new return types (object with value)
 describe("identifyHand", () => {
-  const createCards = (ranks: number[], suits: string[] = ["hearts"]): Card[] =>
-    ranks.map((rank, i) => ({ rank, suit: suits[i % suits.length] }));
-
   it("should identify a single card", () => {
-    const cards = createCards([3]);
+    const cards = createTestCards([3]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "single",
       value: 3,
@@ -30,12 +34,12 @@ describe("identifyHand", () => {
   });
 
   it("should identify a pair", () => {
-    const cards = createCards([4, 4]);
+    const cards = createTestCards([4, 4]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({ type: "pair", value: 4 });
   });
 
   it("should identify a triplet", () => {
-    const cards = createCards([5, 5, 5]);
+    const cards = createTestCards([5, 5, 5]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "triplet",
       value: 5,
@@ -43,7 +47,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a triplet with a single", () => {
-    const cards = createCards([6, 6, 6, 7]);
+    const cards = createTestCards([6, 6, 6, 7]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "tripletWithSingle",
       value: 6,
@@ -51,7 +55,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a triplet with a pair", () => {
-    const cards = createCards([8, 8, 8, 9, 9]);
+    const cards = createTestCards([8, 8, 8, 9, 9]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "tripletWithPair",
       value: 8,
@@ -59,7 +63,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a straight", () => {
-    const cards = createCards([3, 4, 5, 6, 7]);
+    const cards = createTestCards([3, 4, 5, 6, 7]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "straight",
       value: 3,
@@ -67,17 +71,17 @@ describe("identifyHand", () => {
   });
 
   it("straight cannot include twos or jokers", () => {
-    const cards = createCards([10, 11, 12, 13, 14, 15, 16]);
+    const cards = createTestCards([10, 11, 12, 13, 14, 15, 16]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("straight must have minimum length 5", () => {
-    const cards = createCards([3, 4, 5, 6]);
+    const cards = createTestCards([3, 4, 5, 6]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should identify a straight of pairs", () => {
-    const cards = createCards([3, 3, 4, 4, 5, 5]);
+    const cards = createTestCards([3, 3, 4, 4, 5, 5]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "straightOfPairs",
       value: 3,
@@ -85,17 +89,17 @@ describe("identifyHand", () => {
   });
 
   it("straight of pairs cannot include twos or jokers", () => {
-    const cards = createCards([14, 14, 15, 15, 16, 16]);
+    const cards = createTestCards([14, 14, 15, 15, 16, 16]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("straight of pairs must have minimum length 6 (3 unique pairs)", () => {
-    const cards = createCards([3, 3, 4, 4]);
+    const cards = createTestCards([3, 3, 4, 4]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should identify a straight of triplets", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "straightOfTriplets",
       value: 3,
@@ -103,7 +107,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a straight of triplets with singles", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 5, 6]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 5, 6]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "straightOfTripletsWithSingles",
       value: 3,
@@ -111,12 +115,12 @@ describe("identifyHand", () => {
   });
 
   it("should not allow non-unique singles attached to triplet straight", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 6, 6]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 6, 6]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should identify a straight of triplets with pairs", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 5, 5, 6, 6]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 5, 5, 6, 6]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "straightOfTripletsWithPairs",
       value: 3,
@@ -124,27 +128,27 @@ describe("identifyHand", () => {
   });
 
   it("should not count non-sequential triplet straight", () => {
-    const cards = createCards([3, 3, 3, 7, 7, 7, 5, 6]);
+    const cards = createTestCards([3, 3, 3, 7, 7, 7, 5, 6]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should not allow mixed singles/pairs with triplet straight", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 5, 6, 6]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 5, 6, 6]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should not allow extra pairs in triplet straight", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 7, 7]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should not allow non-unique pairs attached to triplet straight", () => {
-    const cards = createCards([3, 3, 3, 4, 4, 4, 6, 6, 6, 6]);
+    const cards = createTestCards([3, 3, 3, 4, 4, 4, 6, 6, 6, 6]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 
   it("should identify a bomb", () => {
-    const cards = createCards([10, 10, 10, 10]);
+    const cards = createTestCards([10, 10, 10, 10]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "bomb",
       value: 10,
@@ -152,7 +156,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a rocket", () => {
-    const cards = createCards([16, 17]);
+    const cards = createTestCards([16, 17]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "rocket",
       value: 17,
@@ -160,7 +164,7 @@ describe("identifyHand", () => {
   });
 
   it("should identify a quadplex set with singles", () => {
-    const cards = createCards([11, 11, 11, 11, 12, 13]);
+    const cards = createTestCards([11, 11, 11, 11, 12, 13]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "quadplexSet",
       value: 11,
@@ -168,14 +172,14 @@ describe("identifyHand", () => {
   });
 
   it("quadplex set with singles must contain exactly two singles", () => {
-    const cards1 = createCards([11, 11, 11, 11, 12]); // 1 single
-    const cards2 = createCards([11, 11, 11, 11, 12, 13, 14]); // 3 singles
+    const cards1 = createTestCards([11, 11, 11, 11, 12]); // 1 single
+    const cards2 = createTestCards([11, 11, 11, 11, 12, 13, 14]); // 3 singles
     expect(identifyHand(cards1)).toStrictEqual(null);
     expect(identifyHand(cards2)).toStrictEqual(null);
   });
 
   it("should identify a quadplex set with pairs", () => {
-    const cards = createCards([11, 11, 11, 11, 12, 12, 13, 13]);
+    const cards = createTestCards([11, 11, 11, 11, 12, 12, 13, 13]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
       type: "quadplexSet",
       value: 11,
@@ -183,14 +187,14 @@ describe("identifyHand", () => {
   });
 
   it("quadplex set with pairs must contain exactly two pairs", () => {
-    const cards1 = createCards([11, 11, 11, 11, 12, 12]); // 1 pair
-    const cards2 = createCards([11, 11, 11, 11, 12, 12, 13, 13, 14, 14]); // 3 pairs
+    const cards1 = createTestCards([11, 11, 11, 11, 12, 12]); // 1 pair
+    const cards2 = createTestCards([11, 11, 11, 11, 12, 12, 13, 13, 14, 14]); // 3 pairs
     expect(identifyHand(cards1)).toStrictEqual(null);
     expect(identifyHand(cards2)).toStrictEqual(null);
   });
 
   it("should throw an error for an invalid hand", () => {
-    const cards = createCards([3, 4, 5]);
+    const cards = createTestCards([3, 4, 5]);
     expect(identifyHand(cards)).toStrictEqual(null);
   });
 });
@@ -205,7 +209,7 @@ describe("createGame", () => {
       deck: expect.any(Array),
       id: expect.any(String),
       phase: "auction",
-      players: names.map((name) => makeTestPlayer(name)),
+      players: names.map((name) => createTestPlayer(name)),
       turn: 0,
     };
 
@@ -214,5 +218,58 @@ describe("createGame", () => {
     expect(gameState.players[1].hand).toHaveLength(17);
     expect(gameState.players[2].hand).toHaveLength(17);
     expect(gameState.deck).toHaveLength(3);
+  });
+});
+
+describe("canBeatHand", () => {
+  const testCases = [
+    {
+      newHand: [16, 17],
+      previousHand: [15, 15, 15, 15],
+      result: true,
+      name: "rocket beats all",
+    },
+    {
+      newHand: [15, 15, 15, 15],
+      previousHand: [14, 14, 14, 14],
+      result: true,
+      name: "bigger bomb beats smaller bomb",
+    },
+    {
+      newHand: [15, 15, 15, 15],
+      previousHand: [15, 15, 15, 15],
+      result: false,
+      name: "equal bomb (not possible in play) doesn't win",
+    },
+    {
+      newHand: [3, 3, 3, 3],
+      previousHand: [3, 4, 5, 6, 7, 8, 9, 10, 11],
+      result: true,
+      name: "bomb beats regular hands",
+    },
+    {
+      newHand: [4, 4, 5, 5, 6, 6],
+      previousHand: [3, 3, 4, 4, 5, 5],
+      result: true,
+      name: "regular hand with higher base value wins",
+    },
+    {
+      newHand: [4],
+      previousHand: [5],
+      result: false,
+      name: "regular hand with lower base value loses",
+    },
+    {
+      newHand: [4, 4, 5, 5, 6, 6, 7, 7],
+      previousHand: [3, 3, 4, 4, 5, 5],
+      result: false,
+      name: "non-matching size for arbitrarily sized hands loses",
+    },
+  ];
+
+  it.each(testCases)("$name", ({ newHand, previousHand, result }) => {
+    const newCards = createTestCards(newHand);
+    const prevCards = createTestCards(previousHand);
+    expect(canBeatHand(newCards, prevCards)).toBe(result);
   });
 });
