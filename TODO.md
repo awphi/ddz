@@ -12,3 +12,6 @@
   - Try to make components semi-reusable for online version
   - Transition screens - "Pass the phone to XXX [Confirm ->]" to avoid hand-spying
   - Motion for neat animations - e.g. use layout animation to move cards from hand, to center, to discard deck as needed
+- Setup GH action to deploy app via vercel
+- Setup GH action for publishing lib (trigger on merge to main)
+- Add links & status/version banners of deployments to READMEs
