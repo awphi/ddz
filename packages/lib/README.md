@@ -2,6 +2,13 @@
 
 TS-based library for the game Dou Di Zhu (斗地主) - a popular Chinese card game.
 
+Key features:
+
+- No dependencies - light bundle weight and minimal maitenance overhead
+- Platform-indepedent - will happily run in the browser or on serverside JS runtimes
+- Simple serializable interface - only requires the transfer of simple JSON objects between the client and server
+- Cross-game score tracking - play multiple games and keep a running tally of who owes what to who
+
 ## Structure
 
 `@ddz/lib` has two key exports:
