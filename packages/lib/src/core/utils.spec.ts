@@ -1,5 +1,5 @@
-import { canBeatHand, createGame, identifyHand } from "./utils";
-import type { Card, GameState, Hand, Player } from "./types";
+import { isValidHand, createGame, identifyHand } from "./utils";
+import type { Card, GameState, Hand, Player } from "../types";
 import { describe, expect, it } from "vitest";
 
 function createTestPlayer(name: string, props?: Partial<Player>): Player {
@@ -204,13 +204,12 @@ describe("createGame", () => {
     const names = ["a", "b", "c"];
     const gameState = createGame(names);
     const expectedGameState: GameState = {
-      currentHand: null,
+      currentHand: [],
       currentPlayerIndex: expect.any(Number),
       deck: expect.any(Array),
       id: expect.any(String),
       phase: "auction",
       players: names.map((name) => createTestPlayer(name)),
-      turn: 0,
     };
 
     expect(gameState).toStrictEqual(expectedGameState);
@@ -221,7 +220,9 @@ describe("createGame", () => {
   });
 });
 
-describe("canBeatHand", () => {
+// TODO write tests for isValidBid
+
+describe("isValidHand", () => {
   const testCases = [
     {
       newHand: [16, 17],
@@ -270,6 +271,6 @@ describe("canBeatHand", () => {
   it.each(testCases)("$name", ({ newHand, previousHand, result }) => {
     const newCards = createTestCards(newHand);
     const prevCards = createTestCards(previousHand);
-    expect(canBeatHand(newCards, prevCards)).toBe(result);
+    expect(isValidHand(newCards, prevCards)).toBe(result);
   });
 });

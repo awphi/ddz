@@ -1,2 +1,3 @@
 export { DdzServer } from "./server";
-export * as utils from "./utils";
+export * as client from "./client";
+export type * from "./types";

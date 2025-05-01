@@ -1,6 +1,40 @@
-import type { Bid, Card, GameState, Hand, Player } from "./types";
+import type { Bid, Card, GameState, Hand, Player } from "../types";
 
-function createDeck(): Card[] {
+// Core DDZ utils consumed by either the client or the server. Exported for testability and not part of the public API.
+
+export function mod(n: number, m: number): number {
+  return ((n % m) + m) % m;
+}
+
+export function countCards(cards: Card[]): Record<number, number> {
+  const result: Record<number, number> = {};
+  for (const card of cards) {
+    result[card.rank] = (result[card.rank] ?? 0) + 1;
+  }
+  return result;
+}
+
+export function groupCards(cards: Card[]): Record<number, number[]> {
+  const counts = countCards(cards);
+  const result: Record<number, number[]> = {};
+
+  // result[i] will be sorted by virtue of the keys of the object returned by countCards()
+  // being ordered by JS
+  for (const [rank, count] of Object.entries(counts)) {
+    if (!(count in result)) {
+      result[count] = [];
+    }
+    result[count].push(Number(rank));
+  }
+
+  return result;
+}
+
+export function isSequential(arr: number[]): boolean {
+  return arr.every((v, i) => i === 0 || v === arr[i - 1] + 1);
+}
+
+export function createDeck(): Card[] {
   const suits = ["hearts", "diamonds", "clubs", "spades"];
   const deck: Card[] = [];
 
@@ -20,41 +54,38 @@ function createDeck(): Card[] {
   return deck;
 }
 
-export function isValidBid(bid: Bid, otherBids: Bid[]): boolean {
-  if (bid === "pass") {
-    return true;
+export function createGame(playerNames: string[]): GameState {
+  if (playerNames.length !== 3) {
+    throw new Error("Number of players must be 3");
   }
 
-  const maxBid = Math.max(...otherBids.filter((v) => v !== "pass").concat(0));
-  return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
-}
+  const players: Player[] = [];
+  const deck = createDeck();
 
-function countCards(cards: Card[]): Record<number, number> {
-  const result: Record<number, number> = {};
-  for (const card of cards) {
-    result[card.rank] = (result[card.rank] ?? 0) + 1;
-  }
-  return result;
-}
-
-function groupCards(cards: Card[]): Record<number, number[]> {
-  const counts = countCards(cards);
-  const result: Record<number, number[]> = {};
-
-  // result[i] will be sorted by virtue of the keys of the object returned by countCards()
-  // being ordered by JS
-  for (const [rank, count] of Object.entries(counts)) {
-    if (!(count in result)) {
-      result[count] = [];
-    }
-    result[count].push(Number(rank));
+  for (let i = 0; i < playerNames.length; i++) {
+    players.push({
+      name: playerNames[i],
+      hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
+      moves: [],
+      type: "farmer", // default type - someone will be set as the landlord after the auction
+      auction: {
+        lastBid: 0,
+        maxBid: 0,
+      },
+    });
   }
 
-  return result;
-}
+  // select a first bidder randomly (effectively the same as drawing the face up card)
+  const currentPlayerIndex = Math.floor(Math.random() * playerNames.length);
 
-function isSequential(arr: number[]): boolean {
-  return arr.every((v, i) => i === 0 || v === arr[i - 1] + 1);
+  return {
+    id: crypto.randomUUID(),
+    phase: "auction",
+    players,
+    deck,
+    currentPlayerIndex,
+    currentHand: [],
+  };
 }
 
 export function identifyHand(cards: Card[]): Hand | null {
@@ -146,12 +177,18 @@ export function identifyHand(cards: Card[]): Hand | null {
   return null;
 }
 
-export function canBeatHand(newHand: Card[], previousHand: Card[]): boolean {
+export function isValidHand(newHand: Card[], currentHand: Card[]): boolean {
   const newType = identifyHand(newHand);
-  const previousType = identifyHand(previousHand);
+  const previousType = identifyHand(currentHand);
 
-  if (newType === null || previousType === null) {
+  // if the new hand is invalid it beats nothing
+  if (newType === null) {
     return false;
+  }
+
+  // if the previous hand was invalid then allow valid hands to beat it
+  if (previousType === null) {
+    return newType !== null;
   }
 
   // rocket beats all
@@ -174,7 +211,7 @@ export function canBeatHand(newHand: Card[], previousHand: Card[]): boolean {
 
   if (
     newType.type === previousType.type &&
-    newHand.length === previousHand.length
+    newHand.length === currentHand.length
   ) {
     return newType.value > previousType.value;
   }
@@ -182,37 +219,7 @@ export function canBeatHand(newHand: Card[], previousHand: Card[]): boolean {
   return false;
 }
 
-export function createGame(playerNames: string[]): GameState {
-  if (playerNames.length !== 3) {
-    throw new Error("Number of players must be 3");
-  }
-
-  const players: Player[] = [];
-  const deck = createDeck();
-
-  for (let i = 0; i < playerNames.length; i++) {
-    players.push({
-      name: playerNames[i],
-      hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
-      moves: [],
-      type: "farmer", // default type - someone will be set as the landlord after the auction
-      auction: {
-        lastBid: 0,
-        maxBid: 0,
-      },
-    });
-  }
-
-  // select a first bidder randomly (effectively the same as drawing the face up card)
-  const currentPlayerIndex = Math.floor(Math.random() * playerNames.length);
-
-  return {
-    id: crypto.randomUUID(),
-    phase: "auction",
-    players,
-    deck,
-    currentPlayerIndex,
-    currentHand: null,
-    turn: 0,
-  };
+export function isValidBid(bid: number, otherBids: Bid[]): boolean {
+  const maxBid = Math.max(...otherBids.filter((v) => v !== "pass").concat(0));
+  return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
 }

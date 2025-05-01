@@ -45,12 +45,11 @@ export interface Player {
 
 export interface GameState {
   id: string; // unique game id created when deck is dealt
-  turn: number;
   phase: "auction" | "play";
   deck: Card[];
   players: Player[];
   currentPlayerIndex: number;
-  currentHand: Card[] | null; // current hand in play to beat
+  currentHand: Card[]; // current hand in play to beat - empty array = nothing to beat
 }
 
 export interface AuctionBidMessage {
@@ -60,7 +59,7 @@ export interface AuctionBidMessage {
 
 export interface PlayMoveMessage {
   type: "playMove";
-  move: Card[] | "pass";
+  move: Move;
 }
 
 export type Message = AuctionBidMessage | PlayMoveMessage;

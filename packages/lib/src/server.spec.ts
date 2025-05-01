@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { DdzServer } from "./server";
 
+function createTestServer(playerNames: string[] = ["a", "b", "c"]): DdzServer {
+  const server = new DdzServer(["a", "b", "c"]);
+  server.start();
+  return server;
+}
+
 describe("DdzServer", () => {
   describe("basic functionality", () => {
     it("creates a server with an initial game state", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       expect(server).toBeInstanceOf(DdzServer);
       expect(server.gameState).toBeDefined();
 
@@ -18,7 +24,7 @@ describe("DdzServer", () => {
     });
 
     it(".on() & .off() work", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const onSpy = vi.fn();
 
       server.on("gameStateChanged", onSpy);
@@ -33,7 +39,7 @@ describe("DdzServer", () => {
     });
 
     it(".once() works", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const onceSpy = vi.fn();
 
       server.once("gameStateChanged", onceSpy);
@@ -45,18 +51,41 @@ describe("DdzServer", () => {
 
       expect(onceSpy).toHaveBeenCalledTimes(1);
     });
+
+    it("gameStart and gameOver are fired as expected", () => {
+      const server = new DdzServer(["a", "b", "c"]);
+      const onStart = vi.fn();
+      const onEnd = vi.fn();
+
+      server.on("gameStart", onStart);
+      server.on("gameOver", onEnd);
+
+      expect(() => server.gameState).toThrow();
+
+      server.start();
+
+      expect(() => server.gameState).not.toThrow();
+      expect(onStart).toHaveBeenCalledTimes(1);
+      expect(onEnd).toHaveBeenCalledTimes(0);
+
+      server.end();
+
+      expect(() => server.gameState).toThrow();
+      expect(onStart).toHaveBeenCalledTimes(1);
+      expect(onEnd).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("auction phase", () => {
     it("handles bids correctly", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 });
       expect(server.gameState.players[firstPlayer].auction.lastBid).toBe(1);
     });
 
     it("invalid bids are interpreted as passes", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       server.play({ type: "auctionBid", bid: 2 });
       const secondPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 }); // cannot bid a lower number
@@ -66,7 +95,7 @@ describe("DdzServer", () => {
     });
 
     it("non-bid messages are interpreted as a pass", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
 
       const firstPlayer = server.gameState.currentPlayerIndex;
       server.play(null); // null (e.g. message not received in time)
@@ -82,7 +111,7 @@ describe("DdzServer", () => {
     });
 
     it("bidding a 3 ends the auction phase", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
       expect(server.gameState.deck).toHaveLength(3);
       server.play({ type: "auctionBid", bid: 3 });
@@ -95,7 +124,7 @@ describe("DdzServer", () => {
     });
 
     it("last non-passed bidder is assigned landlord", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 });
       server.play({ type: "auctionBid", bid: "pass" });
@@ -107,30 +136,18 @@ describe("DdzServer", () => {
       expect(server.gameState.players[firstPlayer].hand).toHaveLength(20);
     });
 
-    it("re-deals if all players pass", () => {
-      const server = new DdzServer(["a", "b", "c"]);
-      const initialGameState = server.gameState;
+    it("ends game if all players pass", () => {
+      const server = createTestServer();
+      const onEnd = vi.fn();
+      server.on("gameOver", onEnd);
       server.play({ type: "auctionBid", bid: "pass" });
       server.play({ type: "auctionBid", bid: "pass" });
       server.play({ type: "auctionBid", bid: "pass" });
-
-      // game state is both referentially and compare-by-value different
-      expect(server.gameState).not.toBe(initialGameState);
-      expect(server.gameState).not.toEqual(initialGameState);
-    });
-
-    it("re-dealing fires a single gameStateChanged event", () => {
-      const server = new DdzServer(["a", "b", "c"]);
-      server.play({ type: "auctionBid", bid: "pass" });
-      server.play({ type: "auctionBid", bid: "pass" });
-      const onSpy = vi.fn();
-      server.on("gameStateChanged", onSpy);
-      server.play({ type: "auctionBid", bid: "pass" });
-      expect(onSpy).toHaveBeenCalledTimes(1);
+      expect(onEnd).toHaveBeenCalledTimes(1);
     });
 
     it("max bid is stored correctly when a player later passes", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 }); // p1
       server.play({ type: "auctionBid", bid: 2 }); // p2
@@ -143,7 +160,7 @@ describe("DdzServer", () => {
     });
 
     it("max bid is stored correctly when a player later outbids themselves", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = createTestServer();
       server.play({ type: "auctionBid", bid: "pass" }); // p1
       const secondPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 }); // p2
