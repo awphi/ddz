@@ -1,5 +1,5 @@
-import { isValidHand, createGame, identifyHand } from "./utils";
-import type { Card, GameState, Hand, Player } from "../types";
+import { isValidHand, createGame, identifyHand, isValidBid } from "./utils";
+import type { Bid, Card, GameState, Hand, Player } from "../types";
 import { describe, expect, it } from "vitest";
 
 function createTestPlayer(name: string, props?: Partial<Player>): Player {
@@ -23,7 +23,6 @@ function createTestCards(
   return ranks.map((rank, i) => ({ rank, suit: suits[i % suits.length] }));
 }
 
-// TODO update to deal with new return types (object with value)
 describe("identifyHand", () => {
   it("should identify a single card", () => {
     const cards = createTestCards([3]);
@@ -220,10 +219,61 @@ describe("createGame", () => {
   });
 });
 
-// TODO write tests for isValidBid
+describe("isValidBid", () => {
+  type TestCase = {
+    bid: number;
+    otherBids: Bid[];
+    result: boolean;
+    name: string;
+  };
+
+  const testCases: TestCase[] = [
+    {
+      bid: 3,
+      otherBids: ["pass", 2],
+      result: true,
+      name: "3 beats all",
+    },
+    {
+      bid: 4,
+      otherBids: ["pass", 2],
+      result: false,
+      name: "cannot bid > 3",
+    },
+    {
+      bid: 1,
+      otherBids: ["pass", 2],
+      result: false,
+      name: "smaller number does not beat a bigger number",
+    },
+    {
+      bid: 1,
+      otherBids: ["pass", "pass"],
+      result: true,
+      name: "any number beats passes",
+    },
+    {
+      bid: 1,
+      otherBids: [],
+      result: true,
+      name: "0-length other bid array",
+    },
+  ];
+
+  it.each(testCases)("$name", ({ bid, otherBids, result }) => {
+    expect(isValidBid(bid, otherBids)).toBe(result);
+  });
+});
 
 describe("isValidHand", () => {
-  const testCases = [
+  type TestCase = {
+    newHand: number[];
+    previousHand: number[];
+    result: boolean;
+    name: string;
+  };
+
+  const testCases: TestCase[] = [
     {
       newHand: [16, 17],
       previousHand: [15, 15, 15, 15],

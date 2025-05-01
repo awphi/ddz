@@ -1,5 +1,4 @@
-- Implement DdzServer play phase - current hand type validation, advancement of play, win condition
-- Tests for DdzServer play phase
+- Tests for DdzServer play phase - current hand type validation, advancement of play, win condition
 - Tests for client utils
 - Implement DdzServer score ledger
   - Keep track of who owes who how much based on scoring rules
