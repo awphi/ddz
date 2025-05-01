@@ -21,12 +21,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "src",
-    "../lib/src/index.ts",
-    "../lib/src/server.ts",
-    "../lib/src/types.ts",
-    "../lib/src/utils.spec.ts",
-    "../lib/src/utils.ts"
-  ]
+  "include": ["src"]
 }
