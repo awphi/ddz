@@ -1,5 +1,7 @@
 - Tests for score ledger
 - Environment tests for DdzServer - node and browser
+- TSDoc for DdzServer and client methods
+- Flesh out DdzServer README with example and a neater description/info
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)
   - Might need router for this as now have 3 pages - splash, local (SPA), online (SPA)
 - "local" mode implementation (pass-the-phone style game)
@@ -10,3 +12,4 @@
 - Setup GH action to deploy app via vercel
 - Setup GH action for publishing lib (trigger on merge to main)
 - Add links & status/version banners of deployments to READMEs
+- Abstract a common game server out of DdzServer - can deal with arbitrary game states w/ abstract scoring rules etc.
