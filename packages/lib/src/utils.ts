@@ -34,22 +34,42 @@ export function isSequential(arr: number[]): boolean {
   return arr.every((v, i) => i === 0 || v === arr[i - 1] + 1);
 }
 
-export function createDeck(): Card[] {
+// TODO test these options - ordering w/ multi-decks and joker exclusion specifically
+type CreateDeckOptions = {
+  includeJokers?: boolean;
+  shuffle?: boolean;
+  numberOfDecks?: number;
+};
+
+export function createDeck({
+  includeJokers = true,
+  shuffle = true,
+  numberOfDecks = 1,
+}: CreateDeckOptions | undefined = {}): Card[] {
   const suits = ["hearts", "diamonds", "clubs", "spades"];
   const deck: Card[] = [];
 
   for (let rank = 3; rank <= 15; rank++) {
     for (const suit of suits) {
-      deck.push({ rank, suit });
+      for (let i = 0; i < numberOfDecks; i++) {
+        deck.push({ rank, suit });
+      }
     }
   }
 
-  deck.push({ rank: 16, suit: "joker" }, { rank: 17, suit: "joker" });
+  if (includeJokers) {
+    for (let rank = 16; rank <= 17; rank++) {
+      for (let i = 0; i < numberOfDecks; i++) {
+        deck.push({ rank, suit: "joker" });
+      }
+    }
+  }
 
-  // shuffle the deck
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+  if (shuffle) {
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
   }
   return deck;
 }

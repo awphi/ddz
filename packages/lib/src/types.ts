@@ -1,5 +1,5 @@
 export interface Card {
-  /* Stored in DDZ priority order in the range [3,17] where: 
+  /* Stored in Dou Di Zhu priority order in the range [3,17] where: 
     - [3, 14] = [3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A]
     - 15 = 2
     - 16 = Black Joker
