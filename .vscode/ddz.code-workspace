@@ -9,8 +9,8 @@
       "name": "app"
     },
     {
-      "path": "../packages/lib",
-      "name": "lib"
+      "path": "../packages/core",
+      "name": "core"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "@ddz/core",
   "version": "0.1.0",
-  "description": "TS-based library for the card games like Dou Di Zhu (斗地主)",
+  "description": "TS-based library for card games like Dou Di Zhu (斗地主)",
   "type": "module",
   "keywords": [
     "ddz",
