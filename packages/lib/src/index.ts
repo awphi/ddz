@@ -1,3 +1,2 @@
-export { DdzServer } from "./server";
-export * as client from "./client";
+export * as ddz from "./ddz";
 export type * from "./types";

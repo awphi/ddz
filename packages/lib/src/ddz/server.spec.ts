@@ -1,13 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { DdzServer } from "./server";
+import { Server } from "./server";
 import { GameState, Move, Player } from "./types";
-import { mod } from "./core/utils";
+import { mod } from "../utils";
 
-describe(DdzServer, () => {
-  function createTestServer(
-    playerNames: string[] = ["a", "b", "c"]
-  ): DdzServer {
-    const server = new DdzServer(playerNames);
+describe(Server, () => {
+  function createTestServer(playerNames: string[] = ["a", "b", "c"]): Server {
+    const server = new Server(playerNames);
     server.start();
     return server;
   }
@@ -28,7 +26,7 @@ describe(DdzServer, () => {
   describe("basic functionality", () => {
     it("creates a server with an initial game state", () => {
       const server = createTestServer();
-      expect(server).toBeInstanceOf(DdzServer);
+      expect(server).toBeInstanceOf(Server);
       expect(server.gameState).toBeDefined();
 
       const names = ["a", "b", "c"];
@@ -85,7 +83,7 @@ describe(DdzServer, () => {
     });
 
     it("gameStart and gameOver are fired as expected", () => {
-      const server = new DdzServer(["a", "b", "c"]);
+      const server = new Server(["a", "b", "c"]);
       const onStart = vi.fn();
       const onEnd = vi.fn();
 
@@ -208,8 +206,8 @@ describe(DdzServer, () => {
   describe("play phase", () => {
     function createTestPlayServer(
       playerNames: string[] = ["a", "b", "c"]
-    ): DdzServer {
-      const server = new DdzServer(playerNames);
+    ): Server {
+      const server = new Server(playerNames);
       server.start();
       server.play({ bid: 1, type: "auctionBid" });
       server.play({ bid: 2, type: "auctionBid" });
@@ -218,7 +216,7 @@ describe(DdzServer, () => {
     }
 
     function playMoves(
-      server: DdzServer,
+      server: Server,
       moves: Move[],
       append: boolean = true
     ): void {
@@ -231,7 +229,7 @@ describe(DdzServer, () => {
       }
     }
 
-    function getPrevPlayer(server: DdzServer): Player {
+    function getPrevPlayer(server: Server): Player {
       return server.gameState.players[
         mod(
           server.gameState.currentPlayerIndex - 1,

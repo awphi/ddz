@@ -1,6 +1,7 @@
 import { canBeatHand, identifyHand, canBeatBid } from "./utils";
-import type { Card, Hand } from "../types";
+import type { Card } from "../types";
 import { describe, expect, it } from "vitest";
+import { Hand } from "./types";
 
 function createTestCards(
   ranks: number[],

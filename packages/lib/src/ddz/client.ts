@@ -1,4 +1,4 @@
-import { canBeatBid, canBeatHand, removeCards } from "./core/utils";
+import { canBeatBid, canBeatHand } from "./utils";
 import type {
   AuctionBidMessage,
   GameState,
@@ -6,10 +6,9 @@ import type {
   Player,
   PlayMoveMessage,
 } from "./types";
+import { removeCards } from "../utils";
 
-// Public client API
-
-// TODO unit tests for this file - maybe mock the core utils as they're already tested?
+// Public DDZ client API
 
 export function isValidBidMessage(
   message: Message | null,

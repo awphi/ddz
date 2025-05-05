@@ -1,66 +1,22 @@
-import { EventBus } from "./core/event-bus";
-import type { GameState, Message, Player, ScoreLedger } from "./types";
+import type { GameState, Message, Player } from "./types";
 import * as client from "./client";
 import {
   addTransactionToScoreLedger,
-  countMovesOfType,
   createDeck,
-  createScoreLedger,
   mod,
   removeCards,
-} from "./core/utils";
+} from "../utils";
+import { countMovesOfType } from "./utils";
+import { GameServer } from "../game-server";
 
-// Public server API
+// Public DDZ server API
 
 /**
  * Dou Dizhu server class.
  * - Responsible for managing the game state primitive and provides methods to interact with it.
  */
-export class DdzServer {
-  private _gameState: GameState | null = null; // gets mutated in place
-  private _scoreLedger: ScoreLedger;
-  private _eventBus: EventBus<{
-    gameStateChanged: () => void;
-    gameOver: () => void;
-    gameStart: () => void;
-  }> = new EventBus();
-
-  public get gameState(): GameState {
-    if (this._gameState === null) {
-      throw new Error("Cannot access game state before a game has started!");
-    }
-
-    return this._gameState;
-  }
-
-  public get scoreLedger(): ScoreLedger {
-    return this._scoreLedger;
-  }
-
-  /**
-   * Start a new game and emit the "gameStart" event
-   */
-  start(): void {
-    this._gameState = this.createGame();
-    this._eventBus.fire("gameStart");
-  }
-
-  /**
-   * Ends the current game and emits a "gameOver" event
-   */
-  end(): void {
-    this._gameState = null;
-    this._eventBus.fire("gameOver");
-  }
-
-  /**
-   * @param _playerNames Player names
-   */
-  constructor(private _playerNames: string[]) {
-    this._scoreLedger = createScoreLedger(this._playerNames);
-  }
-
-  private createGame(): GameState {
+export class Server extends GameServer<GameState, Message> {
+  protected createGame(): GameState {
     const players: Player[] = [];
     const deck = createDeck();
 
@@ -216,8 +172,4 @@ export class DdzServer {
       this._eventBus.fire("gameStateChanged");
     }
   }
-
-  on = this._eventBus.on.bind(this._eventBus);
-  off = this._eventBus.off.bind(this._eventBus);
-  once = this._eventBus.once.bind(this._eventBus);
 }

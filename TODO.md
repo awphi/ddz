@@ -12,4 +12,4 @@
 - Setup GH action to deploy app via vercel
 - Setup GH action for publishing lib (trigger on merge to main)
 - Add links & status/version banners of deployments to READMEs
-- Abstract a common game server out of DdzServer - can deal with arbitrary game states w/ abstract scoring rules etc.
+- More card games in @ddz/lib
