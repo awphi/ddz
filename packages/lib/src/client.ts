@@ -1,8 +1,7 @@
-import { isValidBid, isValidHand } from "./core/utils";
+import { isValidBid, isValidHand, removeCards } from "./core/utils";
 import type {
   AuctionBidMessage,
-  Bid,
-  Card,
+  GameState,
   Message,
   Player,
   PlayMoveMessage,
@@ -14,7 +13,7 @@ import type {
 
 export function isValidBidMessage(
   message: Message | null,
-  otherBids: Bid[]
+  gameState: GameState
 ): message is AuctionBidMessage {
   if (message === null || message.type !== "auctionBid") {
     return false;
@@ -25,12 +24,13 @@ export function isValidBidMessage(
     return true;
   }
 
+  const otherBids = gameState.players.map((v) => v.auction.lastBid);
   return isValidBid(bid, otherBids);
 }
 
 export function isValidMoveMessage(
   message: Message | null,
-  currentHand: Card[]
+  gameState: GameState
 ): message is PlayMoveMessage {
   if (message === null || message.type !== "playMove") {
     return false;
@@ -39,6 +39,14 @@ export function isValidMoveMessage(
   const { move: newHand } = message;
   if (newHand === "pass") {
     return true;
+  }
+
+  const { currentHand } = gameState;
+
+  // take a shallow clone we can mutate to test the player has these cards
+  const playerHand = [...gameState.players[gameState.currentPlayerIndex].hand];
+  if (!removeCards(playerHand, newHand)) {
+    return false;
   }
 
   return isValidHand(newHand, currentHand);

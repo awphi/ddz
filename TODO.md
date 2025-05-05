@@ -1,8 +1,6 @@
-- Tests for DdzServer play phase - current hand type validation, advancement of play, win condition
 - Tests for client utils
 - Implement DdzServer score ledger
   - Keep track of who owes who how much based on scoring rules
-  - Emit an event when the ledger is updated
 - Tests for score ledger
 - Environment tests for DdzServer - node and browser
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)

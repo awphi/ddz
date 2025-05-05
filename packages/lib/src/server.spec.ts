@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import { DdzServer } from "./server";
-
-function createTestServer(playerNames: string[] = ["a", "b", "c"]): DdzServer {
-  const server = new DdzServer(["a", "b", "c"]);
-  server.start();
-  return server;
-}
+import { Move, Player } from "./types";
+import { mod } from "./core/utils";
 
 describe("DdzServer", () => {
+  function createTestServer(
+    playerNames: string[] = ["a", "b", "c"]
+  ): DdzServer {
+    const server = new DdzServer(playerNames);
+    server.start();
+    return server;
+  }
+
   describe("basic functionality", () => {
     it("creates a server with an initial game state", () => {
       const server = createTestServer();
@@ -139,11 +143,15 @@ describe("DdzServer", () => {
     it("ends game if all players pass", () => {
       const server = createTestServer();
       const onEnd = vi.fn();
+      const onChange = vi.fn();
       server.on("gameOver", onEnd);
+      server.on("gameStateChanged", onChange);
+
       server.play({ type: "auctionBid", bid: "pass" });
       server.play({ type: "auctionBid", bid: "pass" });
       server.play({ type: "auctionBid", bid: "pass" });
       expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledTimes(2);
     });
 
     it("max bid is stored correctly when a player later passes", () => {
@@ -171,4 +179,234 @@ describe("DdzServer", () => {
       expect(server.gameState.players[secondPlayer].auction.maxBid).toBe(3);
     });
   });
+
+  describe("play phase", () => {
+    function createTestPlayServer(
+      playerNames: string[] = ["a", "b", "c"]
+    ): DdzServer {
+      const server = new DdzServer(playerNames);
+      server.start();
+      server.play({ bid: 1, type: "auctionBid" });
+      server.play({ bid: 2, type: "auctionBid" });
+      server.play({ bid: 3, type: "auctionBid" });
+      return server;
+    }
+
+    function playMoves(
+      server: DdzServer,
+      moves: Move[],
+      append: boolean = true
+    ): void {
+      for (const move of moves) {
+        const player = server.gameState.currentPlayerIndex;
+        if (move !== "pass" && append) {
+          server.gameState.players[player].hand.push(...move);
+        }
+        server.play({ type: "playMove", move: move });
+      }
+    }
+
+    function getPrevPlayer(server: DdzServer): Player {
+      return server.gameState.players[
+        mod(
+          server.gameState.currentPlayerIndex - 1,
+          server.gameState.players.length
+        )
+      ];
+    }
+
+    it("counts an invalid hand as a pass", () => {
+      const server = createTestPlayServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+      server.play({ type: "playMove", move: [] });
+      expect(server.gameState.players[firstPlayer].moves).toHaveLength(1);
+      expect(server.gameState.players[firstPlayer].moves[0]).toBe("pass");
+    });
+
+    it("counts an invalid message as a pass", () => {
+      const server = createTestPlayServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+      server.play({ type: "auctionBid", bid: 1 });
+      expect(server.gameState.players[firstPlayer].moves).toHaveLength(1);
+      expect(server.gameState.players[firstPlayer].moves[0]).toBe("pass");
+    });
+
+    it("counts a player playing a card they don't have as a pass", () => {
+      const server = createTestPlayServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+
+      server.play({ type: "playMove", move: [{ suit: "foo", rank: 19 }] });
+      expect(server.gameState.currentPlayerIndex).not.toBe(firstPlayer);
+      expect(server.gameState.players[firstPlayer].moves).toHaveLength(1);
+      expect(server.gameState.players[firstPlayer].moves[0]).toBe("pass");
+    });
+
+    it("allows first player to make any valid move", () => {
+      const server = createTestPlayServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+      const move = server.gameState.players[firstPlayer].hand.slice(0, 1); // just play the first card in their hand
+      const remainingHand = server.gameState.players[firstPlayer].hand.slice(1);
+
+      server.play({ type: "playMove", move });
+      expect(server.gameState.currentPlayerIndex).not.toBe(firstPlayer);
+      expect(server.gameState.currentHand).toStrictEqual(move);
+      expect(server.gameState.players[firstPlayer].hand).toStrictEqual(
+        remainingHand
+      ); // ensures played cards are removed from the hand, preserving order
+    });
+
+    it("passed players are not skipped", () => {
+      const server = createTestPlayServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+      playMoves(server, ["pass", [{ rank: 3, suit: "test-suit" }], "pass"]);
+      expect(server.gameState.currentPlayerIndex).toBe(firstPlayer);
+    });
+
+    it("non-matching regular hands are counted as a pass", () => {
+      const server = createTestPlayServer();
+      const firstMove = [{ rank: 3, suit: "test-suit" }];
+      playMoves(server, [
+        firstMove,
+        [
+          { rank: 4, suit: "test-suit" },
+          { rank: 4, suit: "test-suit" },
+        ],
+      ]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe("pass");
+      expect(server.gameState.currentHand).toStrictEqual(firstMove);
+    });
+
+    it("matching, but lesser, regular hands are counted as a pass", () => {
+      const server = createTestPlayServer();
+
+      const firstMove = [
+        { rank: 4, suit: "test-suit" },
+        { rank: 4, suit: "test-suit" },
+      ];
+      playMoves(server, [
+        firstMove,
+        [
+          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "test-suit" },
+        ],
+      ]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe("pass");
+      expect(server.gameState.currentHand).toStrictEqual(firstMove);
+    });
+
+    it("bomb beats any regular hand", () => {
+      const server = createTestPlayServer();
+
+      const secondMove = [
+        { rank: 3, suit: "test-suit" },
+        { rank: 3, suit: "test-suit" },
+        { rank: 3, suit: "test-suit" },
+        { rank: 3, suit: "test-suit" },
+      ];
+      playMoves(server, [[{ rank: 17, suit: "test-suit" }], secondMove]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe(secondMove);
+      expect(server.gameState.currentHand).toStrictEqual(secondMove);
+    });
+
+    it("bigger bomb beats smaller bomb", () => {
+      const server = createTestPlayServer();
+
+      const secondMove = [
+        { rank: 4, suit: "test-suit" },
+        { rank: 4, suit: "test-suit" },
+        { rank: 4, suit: "test-suit" },
+        { rank: 4, suit: "test-suit" },
+      ];
+      playMoves(server, [
+        [
+          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "test-suit" },
+        ],
+        secondMove,
+      ]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe(secondMove);
+      expect(server.gameState.currentHand).toStrictEqual(secondMove);
+    });
+
+    it("rocket beats any regular hand", () => {
+      const server = createTestPlayServer();
+
+      const secondMove = [
+        { rank: 17, suit: "test-suit" },
+        { rank: 16, suit: "test-suit" },
+      ];
+      playMoves(server, [
+        [
+          { rank: 15, suit: "test-suit" },
+          { rank: 14, suit: "test-suit" },
+          { rank: 13, suit: "test-suit" },
+          { rank: 12, suit: "test-suit" },
+          { rank: 11, suit: "test-suit" },
+        ],
+        secondMove,
+      ]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe(secondMove);
+      expect(server.gameState.currentHand).toStrictEqual(secondMove);
+    });
+
+    it("rocket beats any bomb", () => {
+      const server = createTestPlayServer();
+
+      const secondMove = [
+        { rank: 17, suit: "test-suit" },
+        { rank: 16, suit: "test-suit" },
+      ];
+      playMoves(server, [
+        [
+          { rank: 15, suit: "test-suit" },
+          { rank: 15, suit: "test-suit" },
+          { rank: 15, suit: "test-suit" },
+          { rank: 15, suit: "test-suit" },
+        ],
+        secondMove,
+      ]);
+
+      expect(getPrevPlayer(server).moves).toHaveLength(1);
+      expect(getPrevPlayer(server).moves[0]).toBe(secondMove);
+      expect(server.gameState.currentHand).toStrictEqual(secondMove);
+    });
+
+    it("current hand in play is reset if 2 players pass in a row", () => {
+      const server = createTestPlayServer();
+
+      playMoves(server, [[{ rank: 15, suit: "test-suit" }], "pass", "pass"]);
+      expect(server.gameState.currentHand).toStrictEqual([]);
+    });
+
+    it("gameOver event is emitted when first player empties hand", () => {
+      const server = createTestPlayServer();
+      const onEnd = vi.fn();
+      server.on("gameOver", onEnd);
+
+      getPrevPlayer(server).hand = [{ rank: 12, suit: "test-suit" }];
+
+      expect(onEnd).toHaveBeenCalledTimes(0);
+      playMoves(
+        server,
+        ["pass", "pass", [{ rank: 12, suit: "test-suit" }]],
+        false
+      );
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(() => server.gameState).toThrow(); // game state is disposed
+    });
+  });
+
+  // TODO score ledger tests once implemented
 });

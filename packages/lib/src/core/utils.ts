@@ -223,3 +223,54 @@ export function isValidBid(bid: number, otherBids: Bid[]): boolean {
   const maxBid = Math.max(...otherBids.filter((v) => v !== "pass").concat(0));
   return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
 }
+
+/**
+ * Removes cards specified in a toRemove array from a hand array in-place
+ * based on compare-by-value.
+ */
+export function removeCards(hand: Card[], toRemove: Card[]): boolean {
+  for (const card of toRemove) {
+    const idx = hand.findIndex((otherCard) => shallowEqual(card, otherCard));
+    if (idx === -1) {
+      return false;
+    }
+
+    hand.splice(idx, 1);
+  }
+
+  return true;
+}
+
+export function shallowEqual(objA: any, objB: any): boolean {
+  if (Object.is(objA, objB)) {
+    return true;
+  }
+
+  if (
+    typeof objA !== "object" ||
+    objA === null ||
+    typeof objB !== "object" ||
+    objB === null
+  ) {
+    return false;
+  }
+
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+
+  // Test for A's keys different from B.
+  for (let i = 0; i < keysA.length; i++) {
+    if (
+      !Object.hasOwnProperty.call(objB, keysA[i]) ||
+      !Object.is(objA[keysA[i]], objB[keysA[i]])
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}

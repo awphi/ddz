@@ -1,7 +1,7 @@
 import { EventBus } from "./core/event-bus";
 import type { GameState, Message } from "./types";
 import * as client from "./client";
-import { createGame, mod } from "./core/utils";
+import { createGame, mod, removeCards } from "./core/utils";
 
 // Public server API
 
@@ -50,9 +50,8 @@ export class DdzServer {
   private playAuction(message: Message | null): void {
     const state = this.gameState;
     const currentPlayer = state.players[state.currentPlayerIndex];
-    const prevBids = state.players.map((v) => v.auction.lastBid);
 
-    if (client.isValidBidMessage(message, prevBids)) {
+    if (client.isValidBidMessage(message, state)) {
       currentPlayer.auction.lastBid = message.bid;
       if (message.bid !== "pass") {
         currentPlayer.auction.maxBid = message.bid;
@@ -104,14 +103,11 @@ export class DdzServer {
     const currentPlayer = state.players[state.currentPlayerIndex];
     const previousPlayer =
       state.players[mod(state.currentPlayerIndex - 1, state.players.length)];
-    const { currentHand } = state;
 
-    if (
-      client.isValidMoveMessage(message, currentHand) &&
-      message.move !== "pass"
-    ) {
+    if (client.isValidMoveMessage(message, state) && message.move !== "pass") {
       currentPlayer.moves.push(message.move);
       state.currentHand = message.move;
+      removeCards(currentPlayer.hand, message.move);
     } else {
       // interpret any invalid move as a pass
       currentPlayer.moves.push("pass");
