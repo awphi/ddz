@@ -20,7 +20,7 @@
   "author": "adamwph (admin@adamw.ph)",
   "main": "dist/index.js",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --environment=node && vitest --environment=jsdom",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput"
   },

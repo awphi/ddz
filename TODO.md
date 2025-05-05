@@ -1,4 +1,3 @@
-- Environment tests for DdzServer - node and browser
 - TSDoc for DdzServer and client methods
 - Flesh out DdzServer README with example and a neater description/info
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)
