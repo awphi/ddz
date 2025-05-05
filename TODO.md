@@ -10,4 +10,4 @@
 - Setup GH action to deploy app via vercel
 - Setup GH action for publishing lib (trigger on merge to main)
 - Add links & status/version banners of deployments to READMEs
-- More card games in @ddz/lib
+- More card games in @ddz/core

@@ -1,6 +1,6 @@
 import type { Card, ScoreLedger } from "./types";
 
-// General purpose card game and/or misc. utils available for use in @ddz/lib
+// General purpose card game and/or misc. utils available for use in @ddz/core
 
 export function mod(n: number, m: number): number {
   return ((n % m) + m) % m;

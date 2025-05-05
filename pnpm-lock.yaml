@@ -10,7 +10,7 @@ importers:
 
   packages/app:
     dependencies:
-      '@ddz/lib':
+      '@ddz/core':
         specifier: workspace:*
         version: link:../lib
       '@tailwindcss/vite':
