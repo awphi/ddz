@@ -25,7 +25,6 @@ export class Server extends GameServer<GameState, Message> {
         name: this._playerNames[i],
         hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
         moves: [],
-        type: "farmer", // default type - someone will be set as the landlord after the auction
         auction: {
           lastBid: null,
         },
@@ -45,6 +44,7 @@ export class Server extends GameServer<GameState, Message> {
       currentPlayerIndex,
       currentHand: [],
       bid: 0,
+      landlordIndex: -1,
     };
   }
 
@@ -77,21 +77,21 @@ export class Server extends GameServer<GameState, Message> {
     }
 
     // if (this player bid a 3) or (this player and the last player passed) then assign the landlord
-    let landlordIdx = -1;
     if (currentPlayer.auction.lastBid === 3) {
-      landlordIdx = state.currentPlayerIndex;
+      state.landlordIndex = state.currentPlayerIndex;
     } else if (
       currentPlayer.auction.lastBid === "pass" &&
       prevPlayer.auction.lastBid === "pass" &&
       state.players[nextPlayerIndex].auction.lastBid !== null
     ) {
-      landlordIdx = mod(state.currentPlayerIndex + 1, state.players.length);
+      state.landlordIndex = mod(
+        state.currentPlayerIndex + 1,
+        state.players.length
+      );
     }
 
-    if (landlordIdx !== -1) {
-      // assign landlord, deal the remaining cards in the deck, and advance the phase
-      state.players[landlordIdx].type = "landlord";
-      state.players[landlordIdx].hand.push(...state.deck);
+    if (state.landlordIndex !== -1) {
+      state.players[state.landlordIndex].hand.push(...state.deck);
       state.deck = [];
       state.phase = "play";
     } else {
@@ -131,13 +131,16 @@ export class Server extends GameServer<GameState, Message> {
       }
 
       const stake = state.bid * Math.pow(2, totalBombsAndRockets);
+      const isWinnerLandlord = winner === state.landlordIndex;
 
       for (let p = 0; p < state.players.length; p++) {
-        if (state.players[p].type === state.players[winner].type) {
+        if (p === state.landlordIndex) {
           continue;
         }
 
-        addTransactionToScoreLedger(this._scoreLedger, p, winner, stake);
+        const from = isWinnerLandlord ? p : state.landlordIndex;
+        const to = isWinnerLandlord ? state.landlordIndex : p;
+        addTransactionToScoreLedger(this._scoreLedger, from, to, stake);
       }
 
       return this.end();

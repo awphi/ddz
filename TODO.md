@@ -1,4 +1,3 @@
-- Tests for score ledger
 - Environment tests for DdzServer - node and browser
 - TSDoc for DdzServer and client methods
 - Flesh out DdzServer README with example and a neater description/info

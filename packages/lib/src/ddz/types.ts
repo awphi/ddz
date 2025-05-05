@@ -39,7 +39,6 @@ export interface Player {
   name: string;
   hand: Card[];
   moves: Move[];
-  type: "landlord" | "farmer";
   auction: {
     lastBid: Bid | null;
   };
@@ -53,4 +52,5 @@ export interface GameState {
   currentPlayerIndex: number;
   currentHand: Card[]; // current hand in play to beat - empty array = nothing to beat
   bid: number;
+  landlordIndex: number;
 }

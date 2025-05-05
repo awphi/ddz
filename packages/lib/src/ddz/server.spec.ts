@@ -18,7 +18,6 @@ describe(Server, () => {
       },
       hand: expect.any(Array),
       moves: [],
-      type: "farmer",
       ...props,
     });
   }
@@ -38,6 +37,7 @@ describe(Server, () => {
         phase: "auction",
         players: names.map((name) => createTestPlayer(name)),
         bid: 0,
+        landlordIndex: -1,
       };
 
       expect(server.gameState).toStrictEqual(expectedGameState);
@@ -149,7 +149,7 @@ describe(Server, () => {
       expect(server.gameState.deck).toHaveLength(0);
       expect(server.gameState.deck).toHaveLength(0);
       expect(server.gameState.players[firstPlayer].auction.lastBid).toBe(3);
-      expect(server.gameState.players[firstPlayer].type).toBe("landlord");
+      expect(server.gameState.landlordIndex).toBe(firstPlayer);
     });
 
     it("highest non-passing bidder is assigned landlord", () => {
@@ -163,11 +163,11 @@ describe(Server, () => {
       server.play({ type: "auctionBid", bid: "pass" }); // p3
 
       expect(server.gameState.bid).toBe(2);
-      expect(server.gameState.players[firstPlayer].type).toBe("landlord");
+      expect(server.gameState.landlordIndex).toBe(firstPlayer);
       expect(server.gameState.players[firstPlayer].hand).toHaveLength(20);
     });
 
-    it("ends game if all players pass", () => {
+    it("ends game with no score changes if all players pass", () => {
       const server = createTestServer();
       const onEnd = vi.fn();
       const onChange = vi.fn();
@@ -179,6 +179,11 @@ describe(Server, () => {
       server.play({ type: "auctionBid", bid: "pass" });
       expect(onEnd).toHaveBeenCalledTimes(1);
       expect(onChange).toHaveBeenCalledTimes(2);
+      expect(server.scoreLedger.payments).toStrictEqual([
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]);
     });
 
     it("bid is updated correctly when a player later outbids themselves", () => {
@@ -429,7 +434,58 @@ describe(Server, () => {
       expect(onEnd).toHaveBeenCalledTimes(1);
       expect(() => server.gameState).toThrow(); // game state is disposed
     });
-  });
 
-  // TODO score ledger tests once implemented
+    describe("scoring", () => {
+      it("when landlord win, both farmers pay", () => {
+        const server = createTestPlayServer();
+
+        // landlord always plays first so just give them a winning hand to test
+        const { landlordIndex } = server.gameState;
+        expect(server.gameState.currentPlayerIndex).toBe(landlordIndex);
+        server.gameState.players[landlordIndex].hand = [
+          { rank: 3, suit: "test-suit" },
+        ];
+        server.play({
+          type: "playMove",
+          move: [{ rank: 3, suit: "test-suit" }],
+        });
+
+        const { payments } = server.scoreLedger;
+        // other players owe landlord 3 units (the bid) each
+        expect(
+          payments[landlordIndex].filter((_, idx) => idx !== landlordIndex)
+        ).toStrictEqual([-3, -3]);
+
+        // also check special sum cell of the matrix
+        expect(payments[landlordIndex][landlordIndex]).toBe(6);
+      });
+
+      it("when farmers win, landlord pays both", () => {
+        const server = createTestPlayServer();
+
+        const { landlordIndex } = server.gameState;
+        expect(server.gameState.currentPlayerIndex).toBe(landlordIndex);
+        server.play({ type: "playMove", move: "pass" });
+
+        const secondPlayer = server.gameState.currentPlayerIndex;
+        server.gameState.players[server.gameState.currentPlayerIndex].hand = [
+          { rank: 3, suit: "test-suit" },
+        ];
+        server.play({
+          type: "playMove",
+          move: [{ rank: 3, suit: "test-suit" }],
+        });
+
+        const { payments } = server.scoreLedger;
+        // landlord owes 3 units (the bid) to each farmer
+        expect(
+          payments[landlordIndex].filter((_, idx) => idx !== landlordIndex)
+        ).toStrictEqual([3, 3]);
+
+        // also check special sum cell of the matrix
+        expect(payments[secondPlayer][secondPlayer]).toBe(3);
+        expect(payments[landlordIndex][landlordIndex]).toBe(-6);
+      });
+    });
+  });
 });

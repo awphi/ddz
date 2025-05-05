@@ -35,11 +35,11 @@ export function isSequential(arr: number[]): boolean {
 }
 
 // TODO test these options - ordering w/ multi-decks and joker exclusion specifically
-type CreateDeckOptions = {
+interface CreateDeckOptions {
   includeJokers?: boolean;
   shuffle?: boolean;
   numberOfDecks?: number;
-};
+}
 
 export function createDeck({
   includeJokers = true,
