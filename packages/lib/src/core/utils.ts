@@ -177,7 +177,7 @@ export function identifyHand(cards: Card[]): Hand | null {
   return null;
 }
 
-export function isValidHand(newHand: Card[], currentHand: Card[]): boolean {
+export function canBeatHand(newHand: Card[], currentHand: Card[]): boolean {
   const newType = identifyHand(newHand);
   const previousType = identifyHand(currentHand);
 
@@ -219,7 +219,7 @@ export function isValidHand(newHand: Card[], currentHand: Card[]): boolean {
   return false;
 }
 
-export function isValidBid(bid: number, otherBids: Bid[]): boolean {
+export function canBeatBid(bid: number, otherBids: Bid[]): boolean {
   const maxBid = Math.max(...otherBids.filter((v) => v !== "pass").concat(0));
   return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
 }

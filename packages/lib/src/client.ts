@@ -1,4 +1,4 @@
-import { isValidBid, isValidHand, removeCards } from "./core/utils";
+import { canBeatBid, canBeatHand, removeCards } from "./core/utils";
 import type {
   AuctionBidMessage,
   GameState,
@@ -25,7 +25,7 @@ export function isValidBidMessage(
   }
 
   const otherBids = gameState.players.map((v) => v.auction.lastBid);
-  return isValidBid(bid, otherBids);
+  return canBeatBid(bid, otherBids);
 }
 
 export function isValidMoveMessage(
@@ -49,10 +49,10 @@ export function isValidMoveMessage(
     return false;
   }
 
-  return isValidHand(newHand, currentHand);
+  return canBeatHand(newHand, currentHand);
 }
 
-export function getWinner(players: Player[]): number | null {
+export function getWinner(players: Pick<Player, "hand">[]): number | null {
   const idx = players.findIndex((v) => v.hand.length === 0);
   return idx === -1 ? null : idx;
 }

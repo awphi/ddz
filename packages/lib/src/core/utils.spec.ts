@@ -1,4 +1,4 @@
-import { isValidHand, createGame, identifyHand, isValidBid } from "./utils";
+import { canBeatHand, createGame, identifyHand, canBeatBid } from "./utils";
 import type { Bid, Card, GameState, Hand, Player } from "../types";
 import { describe, expect, it } from "vitest";
 
@@ -23,7 +23,7 @@ function createTestCards(
   return ranks.map((rank, i) => ({ rank, suit: suits[i % suits.length] }));
 }
 
-describe("identifyHand", () => {
+describe(identifyHand, () => {
   it("should identify a single card", () => {
     const cards = createTestCards([3]);
     expect(identifyHand(cards)).toStrictEqual<Hand>({
@@ -198,7 +198,7 @@ describe("identifyHand", () => {
   });
 });
 
-describe("createGame", () => {
+describe(createGame, () => {
   it("creates a game state properly", () => {
     const names = ["a", "b", "c"];
     const gameState = createGame(names);
@@ -219,7 +219,7 @@ describe("createGame", () => {
   });
 });
 
-describe("isValidBid", () => {
+describe(canBeatBid, () => {
   type TestCase = {
     bid: number;
     otherBids: Bid[];
@@ -261,11 +261,11 @@ describe("isValidBid", () => {
   ];
 
   it.each(testCases)("$name", ({ bid, otherBids, result }) => {
-    expect(isValidBid(bid, otherBids)).toBe(result);
+    expect(canBeatBid(bid, otherBids)).toBe(result);
   });
 });
 
-describe("isValidHand", () => {
+describe(canBeatHand, () => {
   type TestCase = {
     newHand: number[];
     previousHand: number[];
@@ -321,6 +321,6 @@ describe("isValidHand", () => {
   it.each(testCases)("$name", ({ newHand, previousHand, result }) => {
     const newCards = createTestCards(newHand);
     const prevCards = createTestCards(previousHand);
-    expect(isValidHand(newCards, prevCards)).toBe(result);
+    expect(canBeatHand(newCards, prevCards)).toBe(result);
   });
 });

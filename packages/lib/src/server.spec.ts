@@ -3,7 +3,7 @@ import { DdzServer } from "./server";
 import { Move, Player } from "./types";
 import { mod } from "./core/utils";
 
-describe("DdzServer", () => {
+describe(DdzServer, () => {
   function createTestServer(
     playerNames: string[] = ["a", "b", "c"]
   ): DdzServer {

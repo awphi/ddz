@@ -1,4 +1,3 @@
-- Tests for client utils
 - Implement DdzServer score ledger
   - Keep track of who owes who how much based on scoring rules
 - Tests for score ledger
