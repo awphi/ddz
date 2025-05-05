@@ -1,5 +1,3 @@
-- Implement DdzServer score ledger
-  - Keep track of who owes who how much based on scoring rules
 - Tests for score ledger
 - Environment tests for DdzServer - node and browser
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)

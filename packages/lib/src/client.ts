@@ -24,8 +24,7 @@ export function isValidBidMessage(
     return true;
   }
 
-  const otherBids = gameState.players.map((v) => v.auction.lastBid);
-  return canBeatBid(bid, otherBids);
+  return canBeatBid(bid, gameState.bid);
 }
 
 export function isValidMoveMessage(

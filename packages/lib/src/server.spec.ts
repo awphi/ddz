@@ -123,19 +123,20 @@ describe(DdzServer, () => {
       expect(server.gameState.deck).toHaveLength(0);
       expect(server.gameState.deck).toHaveLength(0);
       expect(server.gameState.players[firstPlayer].auction.lastBid).toBe(3);
-      expect(server.gameState.players[firstPlayer].auction.maxBid).toBe(3);
       expect(server.gameState.players[firstPlayer].type).toBe("landlord");
     });
 
-    it("last non-passed bidder is assigned landlord", () => {
+    it("highest non-passing bidder is assigned landlord", () => {
       const server = createTestServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
-      server.play({ type: "auctionBid", bid: 1 });
-      server.play({ type: "auctionBid", bid: "pass" });
-      server.play({ type: "auctionBid", bid: "pass" });
-      expect(server.gameState.phase).toBe("play");
-      expect(server.gameState.players[firstPlayer].auction.lastBid).toBe(1);
-      expect(server.gameState.players[firstPlayer].auction.maxBid).toBe(1);
+      server.play({ type: "auctionBid", bid: "pass" }); // p1
+      server.play({ type: "auctionBid", bid: 1 }); // p2
+      server.play({ type: "auctionBid", bid: "pass" }); // p3
+      server.play({ type: "auctionBid", bid: 2 }); // p1
+      server.play({ type: "auctionBid", bid: "pass" }); // p2
+      server.play({ type: "auctionBid", bid: "pass" }); // p3
+
+      expect(server.gameState.bid).toBe(2);
       expect(server.gameState.players[firstPlayer].type).toBe("landlord");
       expect(server.gameState.players[firstPlayer].hand).toHaveLength(20);
     });
@@ -154,29 +155,25 @@ describe(DdzServer, () => {
       expect(onChange).toHaveBeenCalledTimes(2);
     });
 
-    it("max bid is stored correctly when a player later passes", () => {
-      const server = createTestServer();
-      const firstPlayer = server.gameState.currentPlayerIndex;
-      server.play({ type: "auctionBid", bid: 1 }); // p1
-      server.play({ type: "auctionBid", bid: 2 }); // p2
-      server.play({ type: "auctionBid", bid: "pass" }); // p3
-      server.play({ type: "auctionBid", bid: "pass" }); // p1
-      expect(server.gameState.players[firstPlayer].auction.lastBid).toBe(
-        "pass"
-      );
-      expect(server.gameState.players[firstPlayer].auction.maxBid).toBe(1);
-    });
-
-    it("max bid is stored correctly when a player later outbids themselves", () => {
+    it("bid is updated correctly when a player later outbids themselves", () => {
       const server = createTestServer();
       server.play({ type: "auctionBid", bid: "pass" }); // p1
       const secondPlayer = server.gameState.currentPlayerIndex;
       server.play({ type: "auctionBid", bid: 1 }); // p2
       server.play({ type: "auctionBid", bid: 2 }); // p3
-      expect(server.gameState.currentPlayerIndex).toBe(secondPlayer);
+      server.play({ type: "auctionBid", bid: "pass" }); // p1
       server.play({ type: "auctionBid", bid: 3 }); // p2
       expect(server.gameState.players[secondPlayer].auction.lastBid).toBe(3);
-      expect(server.gameState.players[secondPlayer].auction.maxBid).toBe(3);
+      expect(server.gameState.bid).toBe(3);
+    });
+
+    it("passed players are not skipped", () => {
+      const server = createTestServer();
+      const firstPlayer = server.gameState.currentPlayerIndex;
+      server.play({ type: "auctionBid", bid: "pass" }); // p1
+      server.play({ type: "auctionBid", bid: 1 }); // p2
+      server.play({ type: "auctionBid", bid: 2 }); // p3
+      expect(server.gameState.currentPlayerIndex).toBe(firstPlayer);
     });
   });
 

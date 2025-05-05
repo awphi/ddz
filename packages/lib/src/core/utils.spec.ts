@@ -1,13 +1,12 @@
 import { canBeatHand, createGame, identifyHand, canBeatBid } from "./utils";
-import type { Bid, Card, GameState, Hand, Player } from "../types";
+import type { Card, GameState, Hand, Player } from "../types";
 import { describe, expect, it } from "vitest";
 
 function createTestPlayer(name: string, props?: Partial<Player>): Player {
   return expect.objectContaining<Player>({
     name,
     auction: {
-      lastBid: 0,
-      maxBid: 0,
+      lastBid: null,
     },
     hand: expect.any(Array),
     moves: [],
@@ -209,6 +208,7 @@ describe(createGame, () => {
       id: expect.any(String),
       phase: "auction",
       players: names.map((name) => createTestPlayer(name)),
+      bid: 0,
     };
 
     expect(gameState).toStrictEqual(expectedGameState);
@@ -222,7 +222,7 @@ describe(createGame, () => {
 describe(canBeatBid, () => {
   type TestCase = {
     bid: number;
-    otherBids: Bid[];
+    currentBid: number;
     result: boolean;
     name: string;
   };
@@ -230,38 +230,38 @@ describe(canBeatBid, () => {
   const testCases: TestCase[] = [
     {
       bid: 3,
-      otherBids: ["pass", 2],
+      currentBid: 2,
       result: true,
-      name: "3 beats all",
+      name: "basically works",
     },
     {
       bid: 4,
-      otherBids: ["pass", 2],
+      currentBid: 2,
       result: false,
       name: "cannot bid > 3",
     },
     {
       bid: 1,
-      otherBids: ["pass", 2],
+      currentBid: 2,
       result: false,
       name: "smaller number does not beat a bigger number",
     },
     {
       bid: 1,
-      otherBids: ["pass", "pass"],
+      currentBid: 0,
       result: true,
       name: "any number beats passes",
     },
     {
       bid: 1,
-      otherBids: [],
+      currentBid: 0,
       result: true,
       name: "0-length other bid array",
     },
   ];
 
-  it.each(testCases)("$name", ({ bid, otherBids, result }) => {
-    expect(canBeatBid(bid, otherBids)).toBe(result);
+  it.each(testCases)("$name", ({ bid, currentBid, result }) => {
+    expect(canBeatBid(bid, currentBid)).toBe(result);
   });
 });
 

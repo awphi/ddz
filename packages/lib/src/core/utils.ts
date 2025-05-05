@@ -1,4 +1,11 @@
-import type { Bid, Card, GameState, Hand, Player } from "../types";
+import type {
+  Card,
+  GameState,
+  Hand,
+  Move,
+  Player,
+  ScoreLedger,
+} from "../types";
 
 // Core DDZ utils consumed by either the client or the server. Exported for testability and not part of the public API.
 
@@ -69,8 +76,7 @@ export function createGame(playerNames: string[]): GameState {
       moves: [],
       type: "farmer", // default type - someone will be set as the landlord after the auction
       auction: {
-        lastBid: 0,
-        maxBid: 0,
+        lastBid: null,
       },
     });
   }
@@ -85,6 +91,7 @@ export function createGame(playerNames: string[]): GameState {
     deck,
     currentPlayerIndex,
     currentHand: [],
+    bid: 0,
   };
 }
 
@@ -219,9 +226,13 @@ export function canBeatHand(newHand: Card[], currentHand: Card[]): boolean {
   return false;
 }
 
-export function canBeatBid(bid: number, otherBids: Bid[]): boolean {
-  const maxBid = Math.max(...otherBids.filter((v) => v !== "pass").concat(0));
-  return Number.isInteger(bid) && bid >= 1 && bid <= 3 && bid > maxBid;
+export function canBeatBid(newBid: number, currentBid: number): boolean {
+  return (
+    Number.isInteger(newBid) &&
+    newBid >= 1 &&
+    newBid <= 3 &&
+    newBid > currentBid
+  );
 }
 
 /**
@@ -273,4 +284,40 @@ export function shallowEqual(objA: any, objB: any): boolean {
   }
 
   return true;
+}
+
+export function createScoreLedger(playerNames: string[]): ScoreLedger {
+  const N = playerNames.length;
+  return {
+    payments: Array.from({ length: N }, () => new Array(N).fill(0)),
+    playerNames,
+  };
+}
+
+export function addTransactionToScoreLedger(
+  ledger: ScoreLedger,
+  from: number,
+  to: number,
+  amount: number
+): void {
+  ledger.payments[from][to] += amount;
+  ledger.payments[to][from] -= amount;
+  ledger.payments[from][from] -= amount;
+  ledger.payments[to][to] += amount;
+}
+
+export function countMovesOfType(moves: Move[], types: Hand["type"][]): number {
+  let sum = 0;
+  for (const move of moves) {
+    if (move === "pass") {
+      continue;
+    }
+
+    const hand = identifyHand(move);
+    if (hand !== null && types.includes(hand.type)) {
+      sum += 1;
+    }
+  }
+
+  return sum;
 }

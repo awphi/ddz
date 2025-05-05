@@ -1,7 +1,14 @@
 import { EventBus } from "./core/event-bus";
-import type { GameState, Message } from "./types";
+import type { GameState, Message, ScoreLedger } from "./types";
 import * as client from "./client";
-import { createGame, mod, removeCards } from "./core/utils";
+import {
+  addTransactionToScoreLedger,
+  countMovesOfType,
+  createGame,
+  createScoreLedger,
+  mod,
+  removeCards,
+} from "./core/utils";
 
 // Public server API
 
@@ -11,6 +18,7 @@ import { createGame, mod, removeCards } from "./core/utils";
  */
 export class DdzServer {
   private _gameState: GameState | null = null; // gets mutated in place
+  private _scoreLedger: ScoreLedger;
   private _eventBus: EventBus<{
     gameStateChanged: () => void;
     gameOver: () => void;
@@ -23,6 +31,10 @@ export class DdzServer {
     }
 
     return this._gameState;
+  }
+
+  public get scoreLedger(): ScoreLedger {
+    return this._scoreLedger;
   }
 
   /**
@@ -45,39 +57,49 @@ export class DdzServer {
    * @param _playerNames Player names
    * @param _turnTime Max amount of time (in ms) a player has to play their turn
    */
-  constructor(private _playerNames: string[]) {}
+  constructor(private _playerNames: string[]) {
+    this._scoreLedger = createScoreLedger(this._playerNames);
+  }
 
   private playAuction(message: Message | null): void {
     const state = this.gameState;
     const currentPlayer = state.players[state.currentPlayerIndex];
+    const prevPlayer =
+      state.players[mod(state.currentPlayerIndex - 1, state.players.length)];
+    const nextPlayerIndex = mod(
+      state.currentPlayerIndex + 1,
+      state.players.length
+    );
 
     if (client.isValidBidMessage(message, state)) {
       currentPlayer.auction.lastBid = message.bid;
       if (message.bid !== "pass") {
-        currentPlayer.auction.maxBid = message.bid;
+        state.bid = message.bid;
       }
     } else {
       // interpret any invalid bid as a pass
       currentPlayer.auction.lastBid = "pass";
     }
 
-    // deal with advancing to the play phase or re-dealing
-    const numericBids = state.players
-      .map((v) => v.auction.lastBid)
-      .filter((v) => v !== "pass");
-
-    if (numericBids.length === 0) {
+    // if no one bid anything then end the game
+    if (
+      state.bid === 0 &&
+      state.players.every((v) => v.auction.lastBid === "pass")
+    ) {
       return this.end();
     }
 
-    // assign landlord to anyone who bids 3, or the last remaining non-passed bidder
-    const landlordIdx: number = state.players.findIndex(
-      (v) =>
-        v.auction.lastBid === 3 ||
-        (numericBids.length === 1 &&
-          v.auction.lastBid !== "pass" &&
-          v.auction.lastBid > 0)
-    );
+    // if (this player bid a 3) or (this player and the last player passed) then assign the landlord
+    let landlordIdx = -1;
+    if (currentPlayer.auction.lastBid === 3) {
+      landlordIdx = state.currentPlayerIndex;
+    } else if (
+      currentPlayer.auction.lastBid === "pass" &&
+      prevPlayer.auction.lastBid === "pass" &&
+      state.players[nextPlayerIndex].auction.lastBid !== null
+    ) {
+      landlordIdx = mod(state.currentPlayerIndex + 1, state.players.length);
+    }
 
     if (landlordIdx !== -1) {
       // assign landlord, deal the remaining cards in the deck, and advance the phase
@@ -86,15 +108,7 @@ export class DdzServer {
       state.deck = [];
       state.phase = "play";
     } else {
-      // otherwise advance play to the next non-passed bidder
-      do {
-        state.currentPlayerIndex = mod(
-          state.currentPlayerIndex + 1,
-          state.players.length
-        );
-      } while (
-        state.players[state.currentPlayerIndex].auction.lastBid === "pass"
-      );
+      state.currentPlayerIndex = nextPlayerIndex;
     }
   }
 
@@ -118,8 +132,27 @@ export class DdzServer {
       }
     }
 
-    if (client.getWinner(state.players) !== null) {
-      // TODO update ledger
+    const winner = client.getWinner(state.players);
+    if (winner !== null) {
+      // update the score ledger with the result
+      let totalBombsAndRockets = 0;
+      for (const player of state.players) {
+        totalBombsAndRockets += countMovesOfType(player.moves, [
+          "bomb",
+          "rocket",
+        ]);
+      }
+
+      const stake = state.bid * Math.pow(2, totalBombsAndRockets);
+
+      for (let p = 0; p < state.players.length; p++) {
+        if (state.players[p].type === state.players[winner].type) {
+          continue;
+        }
+
+        addTransactionToScoreLedger(this._scoreLedger, p, winner, stake);
+      }
+
       return this.end();
     }
 
