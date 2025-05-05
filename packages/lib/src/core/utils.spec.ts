@@ -1,19 +1,6 @@
-import { canBeatHand, createGame, identifyHand, canBeatBid } from "./utils";
-import type { Card, GameState, Hand, Player } from "../types";
+import { canBeatHand, identifyHand, canBeatBid } from "./utils";
+import type { Card, Hand } from "../types";
 import { describe, expect, it } from "vitest";
-
-function createTestPlayer(name: string, props?: Partial<Player>): Player {
-  return expect.objectContaining<Player>({
-    name,
-    auction: {
-      lastBid: null,
-    },
-    hand: expect.any(Array),
-    moves: [],
-    type: "farmer",
-    ...props,
-  });
-}
 
 function createTestCards(
   ranks: number[],
@@ -194,28 +181,6 @@ describe(identifyHand, () => {
   it("should throw an error for an invalid hand", () => {
     const cards = createTestCards([3, 4, 5]);
     expect(identifyHand(cards)).toStrictEqual(null);
-  });
-});
-
-describe(createGame, () => {
-  it("creates a game state properly", () => {
-    const names = ["a", "b", "c"];
-    const gameState = createGame(names);
-    const expectedGameState: GameState = {
-      currentHand: [],
-      currentPlayerIndex: expect.any(Number),
-      deck: expect.any(Array),
-      id: expect.any(String),
-      phase: "auction",
-      players: names.map((name) => createTestPlayer(name)),
-      bid: 0,
-    };
-
-    expect(gameState).toStrictEqual(expectedGameState);
-    expect(gameState.players[0].hand).toHaveLength(17);
-    expect(gameState.players[1].hand).toHaveLength(17);
-    expect(gameState.players[2].hand).toHaveLength(17);
-    expect(gameState.deck).toHaveLength(3);
   });
 });
 

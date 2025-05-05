@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { DdzServer } from "./server";
-import { Move, Player } from "./types";
+import { GameState, Move, Player } from "./types";
 import { mod } from "./core/utils";
 
 describe(DdzServer, () => {
@@ -12,13 +12,41 @@ describe(DdzServer, () => {
     return server;
   }
 
+  function createTestPlayer(name: string, props?: Partial<Player>): Player {
+    return expect.objectContaining<Player>({
+      name,
+      auction: {
+        lastBid: null,
+      },
+      hand: expect.any(Array),
+      moves: [],
+      type: "farmer",
+      ...props,
+    });
+  }
+
   describe("basic functionality", () => {
     it("creates a server with an initial game state", () => {
       const server = createTestServer();
       expect(server).toBeInstanceOf(DdzServer);
       expect(server.gameState).toBeDefined();
 
-      // basic sanity checks
+      const names = ["a", "b", "c"];
+      const expectedGameState: GameState = {
+        currentHand: [],
+        currentPlayerIndex: expect.any(Number),
+        deck: expect.any(Array),
+        id: expect.any(String),
+        phase: "auction",
+        players: names.map((name) => createTestPlayer(name)),
+        bid: 0,
+      };
+
+      expect(server.gameState).toStrictEqual(expectedGameState);
+      expect(server.gameState.players[0].hand).toHaveLength(17);
+      expect(server.gameState.players[1].hand).toHaveLength(17);
+      expect(server.gameState.players[2].hand).toHaveLength(17);
+      expect(server.gameState.deck).toHaveLength(3);
       expect(server.gameState.players.length).toBe(3);
       expect(server.gameState.players[0].name).toBe("a");
       expect(server.gameState.phase).toBe("auction");

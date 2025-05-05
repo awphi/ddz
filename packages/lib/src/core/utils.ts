@@ -61,40 +61,6 @@ export function createDeck(): Card[] {
   return deck;
 }
 
-export function createGame(playerNames: string[]): GameState {
-  if (playerNames.length !== 3) {
-    throw new Error("Number of players must be 3");
-  }
-
-  const players: Player[] = [];
-  const deck = createDeck();
-
-  for (let i = 0; i < playerNames.length; i++) {
-    players.push({
-      name: playerNames[i],
-      hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
-      moves: [],
-      type: "farmer", // default type - someone will be set as the landlord after the auction
-      auction: {
-        lastBid: null,
-      },
-    });
-  }
-
-  // select a first bidder randomly (effectively the same as drawing the face up card)
-  const currentPlayerIndex = Math.floor(Math.random() * playerNames.length);
-
-  return {
-    id: crypto.randomUUID(),
-    phase: "auction",
-    players,
-    deck,
-    currentPlayerIndex,
-    currentHand: [],
-    bid: 0,
-  };
-}
-
 export function identifyHand(cards: Card[]): Hand | null {
   if (cards.length === 0) {
     return null;

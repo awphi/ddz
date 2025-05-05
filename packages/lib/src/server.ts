@@ -1,10 +1,10 @@
 import { EventBus } from "./core/event-bus";
-import type { GameState, Message, ScoreLedger } from "./types";
+import type { GameState, Message, Player, ScoreLedger } from "./types";
 import * as client from "./client";
 import {
   addTransactionToScoreLedger,
   countMovesOfType,
-  createGame,
+  createDeck,
   createScoreLedger,
   mod,
   removeCards,
@@ -41,7 +41,7 @@ export class DdzServer {
    * Start a new game and emit the "gameStart" event
    */
   start(): void {
-    this._gameState = createGame(this._playerNames);
+    this._gameState = this.createGame();
     this._eventBus.fire("gameStart");
   }
 
@@ -55,10 +55,41 @@ export class DdzServer {
 
   /**
    * @param _playerNames Player names
-   * @param _turnTime Max amount of time (in ms) a player has to play their turn
    */
   constructor(private _playerNames: string[]) {
     this._scoreLedger = createScoreLedger(this._playerNames);
+  }
+
+  private createGame(): GameState {
+    const players: Player[] = [];
+    const deck = createDeck();
+
+    for (let i = 0; i < this._playerNames.length; i++) {
+      players.push({
+        name: this._playerNames[i],
+        hand: deck.splice(0, 17), // 17 cards each, 3 left in the deck for the landlord
+        moves: [],
+        type: "farmer", // default type - someone will be set as the landlord after the auction
+        auction: {
+          lastBid: null,
+        },
+      });
+    }
+
+    // select a first bidder randomly (effectively the same as drawing the face up card)
+    const currentPlayerIndex = Math.floor(
+      Math.random() * this._playerNames.length
+    );
+
+    return {
+      id: crypto.randomUUID(),
+      phase: "auction",
+      players,
+      deck,
+      currentPlayerIndex,
+      currentHand: [],
+      bid: 0,
+    };
   }
 
   private playAuction(message: Message | null): void {
