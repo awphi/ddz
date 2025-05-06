@@ -1,3 +1,4 @@
+import { Flex, Text, Button } from "@radix-ui/themes";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/about")({
@@ -5,5 +6,10 @@ export const Route = createFileRoute("/about")({
 });
 
 function About() {
-  return <div className="p-2">Hello from About!</div>;
+  return (
+    <Flex direction="column" gap="2">
+      <Text>Hello from Radix Themes</Text>
+      <Button>Let's go</Button>
+    </Flex>
+  );
 }
