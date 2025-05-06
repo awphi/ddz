@@ -3,13 +3,18 @@ import type {
   AuctionBidMessage,
   GameState,
   Message,
-  Player,
   PlayMoveMessage,
 } from "./types";
 import { popSubarray } from "../utils";
 
 // Public DDZ client API
 
+/**
+ * Check if a message is a valid bid given the current game state
+ * @param message the message to test
+ * @param gameState the current game state
+ * @returns true or false
+ */
 export function isValidBidMessage(
   message: Message | null,
   gameState: GameState
@@ -26,6 +31,12 @@ export function isValidBidMessage(
   return canBeatBid(bid, gameState.bid);
 }
 
+/**
+ * Check if a message is a valid move given the current game state
+ * @param message the message to test
+ * @param gameState the current game state
+ * @returns true or false
+ */
 export function isValidMoveMessage(
   message: Message | null,
   gameState: GameState
@@ -50,7 +61,11 @@ export function isValidMoveMessage(
   return canBeatHand(newHand, currentHand);
 }
 
-export function getWinner(players: Pick<Player, "hand">[]): number | null {
+/**
+ * Get the winner of a given game state.
+ * @returns the index of the gameState.players array if there is a winner, null otherwise
+ */
+export function getWinner({ players }: GameState): number | null {
   const idx = players.findIndex((v) => v.hand.length === 0);
   return idx === -1 ? null : idx;
 }

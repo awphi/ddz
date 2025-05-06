@@ -1,4 +1,3 @@
-- TSDoc for DdzServer and client methods
 - Main splash screen for site - choose your mode "local" or "online" (latter coming soon)
   - Might need router for this as now have 3 pages - splash, local (SPA), online (SPA)
 - "local" mode implementation (pass-the-phone style game)

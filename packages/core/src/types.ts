@@ -1,3 +1,6 @@
+/**
+ * Simple score ledger for tracking payments between players and sum gains/losses.
+ */
 export interface ScoreLedger {
   /**
    * Adjacency matrix of payments to be made between entities:
@@ -8,5 +11,8 @@ export interface ScoreLedger {
    * - `ledger.payments[a][a]` -> total amount owed TO `a` - total amount owed BY `a`
    */
   payments: number[][];
+  /**
+   * Player names - indices correspond the the the same in the `payments` matrix.
+   */
   playerNames: string[];
 }

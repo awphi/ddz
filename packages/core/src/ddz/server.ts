@@ -114,7 +114,7 @@ export class Server extends GameServer<GameState, Message> {
       }
     }
 
-    const winner = client.getWinner(state.players);
+    const winner = client.getWinner(state);
     if (winner !== null) {
       // update the score ledger with the result
       let totalBombsAndRockets = 0;
@@ -148,14 +148,9 @@ export class Server extends GameServer<GameState, Message> {
     );
   }
 
-  /**
-   * Perform an action on behalf of the current player. It is the server host's responsbility
-   * to determine if the action was received from the correct player.
-   * @param message The action to perform. `null` means the player has done nothing this turn and is currently equivalent to passing in all cases.
-   */
   play(message: Message | null): void {
     const state = this._gameState;
-    if (state === null || client.getWinner(state.players) !== null) {
+    if (state === null || client.getWinner(state) !== null) {
       return;
     }
 
