@@ -1,12 +1,7 @@
 import type { GameState, Message, Player } from "./types";
 import * as client from "./client";
-import {
-  addTransactionToScoreLedger,
-  createDeck,
-  mod,
-  removeCards,
-} from "../utils";
-import { countMovesOfType } from "./utils";
+import { addTransactionToScoreLedger, mod, popSubarray } from "../utils";
+import { countMovesOfType, createDeck } from "./utils";
 import { GameServer } from "../game-server";
 
 // Public DDZ server API
@@ -108,7 +103,7 @@ export class Server extends GameServer<GameState, Message> {
     if (client.isValidMoveMessage(message, state) && message.move !== "pass") {
       currentPlayer.moves.push(message.move);
       state.currentHand = message.move;
-      removeCards(currentPlayer.hand, message.move);
+      popSubarray(currentPlayer.hand, message.move);
     } else {
       // interpret any invalid move as a pass
       currentPlayer.moves.push("pass");

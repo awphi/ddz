@@ -15,8 +15,8 @@ describe(client.getWinner, () => {
   it("returns null if there's no winner", () => {
     expect(
       client.getWinner([
-        { hand: [{ rank: 1, suit: "test-suit" }] },
-        { hand: [{ rank: 1, suit: "test-suit" }] },
+        { hand: [{ rank: 1, suit: "hearts" }] },
+        { hand: [{ rank: 1, suit: "hearts" }] },
       ])
     ).toBe(null);
   });

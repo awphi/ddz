@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Server } from "./server";
-import { GameState, Move, Player } from "./types";
+import type { Card, GameState, Move, Player } from "./types";
 import { mod } from "../utils";
 
 describe(Server, () => {
@@ -263,7 +263,7 @@ describe(Server, () => {
       const server = createTestPlayServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
 
-      server.play({ type: "playMove", move: [{ suit: "foo", rank: 19 }] });
+      server.play({ type: "playMove", move: [{ suit: "hearts", rank: 19 }] });
       expect(server.gameState.currentPlayerIndex).not.toBe(firstPlayer);
       expect(server.gameState.players[firstPlayer].moves).toHaveLength(1);
       expect(server.gameState.players[firstPlayer].moves[0]).toBe("pass");
@@ -286,18 +286,18 @@ describe(Server, () => {
     it("passed players are not skipped", () => {
       const server = createTestPlayServer();
       const firstPlayer = server.gameState.currentPlayerIndex;
-      playMoves(server, ["pass", [{ rank: 3, suit: "test-suit" }], "pass"]);
+      playMoves(server, ["pass", [{ rank: 3, suit: "hearts" }], "pass"]);
       expect(server.gameState.currentPlayerIndex).toBe(firstPlayer);
     });
 
     it("non-matching regular hands are counted as a pass", () => {
       const server = createTestPlayServer();
-      const firstMove = [{ rank: 3, suit: "test-suit" }];
+      const firstMove: Card[] = [{ rank: 3, suit: "hearts" }];
       playMoves(server, [
         firstMove,
         [
-          { rank: 4, suit: "test-suit" },
-          { rank: 4, suit: "test-suit" },
+          { rank: 4, suit: "hearts" },
+          { rank: 4, suit: "hearts" },
         ],
       ]);
 
@@ -309,15 +309,15 @@ describe(Server, () => {
     it("matching, but lesser, regular hands are counted as a pass", () => {
       const server = createTestPlayServer();
 
-      const firstMove = [
-        { rank: 4, suit: "test-suit" },
-        { rank: 4, suit: "test-suit" },
+      const firstMove: Card[] = [
+        { rank: 4, suit: "hearts" },
+        { rank: 4, suit: "hearts" },
       ];
       playMoves(server, [
         firstMove,
         [
-          { rank: 3, suit: "test-suit" },
-          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "hearts" },
+          { rank: 3, suit: "hearts" },
         ],
       ]);
 
@@ -329,13 +329,13 @@ describe(Server, () => {
     it("bomb beats any regular hand", () => {
       const server = createTestPlayServer();
 
-      const secondMove = [
-        { rank: 3, suit: "test-suit" },
-        { rank: 3, suit: "test-suit" },
-        { rank: 3, suit: "test-suit" },
-        { rank: 3, suit: "test-suit" },
+      const secondMove: Card[] = [
+        { rank: 3, suit: "hearts" },
+        { rank: 3, suit: "hearts" },
+        { rank: 3, suit: "hearts" },
+        { rank: 3, suit: "hearts" },
       ];
-      playMoves(server, [[{ rank: 17, suit: "test-suit" }], secondMove]);
+      playMoves(server, [[{ rank: 17, suit: "hearts" }], secondMove]);
 
       expect(getPrevPlayer(server).moves).toHaveLength(1);
       expect(getPrevPlayer(server).moves[0]).toBe(secondMove);
@@ -345,18 +345,18 @@ describe(Server, () => {
     it("bigger bomb beats smaller bomb", () => {
       const server = createTestPlayServer();
 
-      const secondMove = [
-        { rank: 4, suit: "test-suit" },
-        { rank: 4, suit: "test-suit" },
-        { rank: 4, suit: "test-suit" },
-        { rank: 4, suit: "test-suit" },
+      const secondMove: Card[] = [
+        { rank: 4, suit: "hearts" },
+        { rank: 4, suit: "hearts" },
+        { rank: 4, suit: "hearts" },
+        { rank: 4, suit: "hearts" },
       ];
       playMoves(server, [
         [
-          { rank: 3, suit: "test-suit" },
-          { rank: 3, suit: "test-suit" },
-          { rank: 3, suit: "test-suit" },
-          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "hearts" },
+          { rank: 3, suit: "hearts" },
+          { rank: 3, suit: "hearts" },
+          { rank: 3, suit: "hearts" },
         ],
         secondMove,
       ]);
@@ -369,17 +369,17 @@ describe(Server, () => {
     it("rocket beats any regular hand", () => {
       const server = createTestPlayServer();
 
-      const secondMove = [
-        { rank: 17, suit: "test-suit" },
-        { rank: 16, suit: "test-suit" },
+      const secondMove: Card[] = [
+        { rank: 17, suit: "hearts" },
+        { rank: 16, suit: "hearts" },
       ];
       playMoves(server, [
         [
-          { rank: 15, suit: "test-suit" },
-          { rank: 14, suit: "test-suit" },
-          { rank: 13, suit: "test-suit" },
-          { rank: 12, suit: "test-suit" },
-          { rank: 11, suit: "test-suit" },
+          { rank: 15, suit: "hearts" },
+          { rank: 14, suit: "hearts" },
+          { rank: 13, suit: "hearts" },
+          { rank: 12, suit: "hearts" },
+          { rank: 11, suit: "hearts" },
         ],
         secondMove,
       ]);
@@ -392,16 +392,16 @@ describe(Server, () => {
     it("rocket beats any bomb", () => {
       const server = createTestPlayServer();
 
-      const secondMove = [
-        { rank: 17, suit: "test-suit" },
-        { rank: 16, suit: "test-suit" },
+      const secondMove: Card[] = [
+        { rank: 17, suit: "hearts" },
+        { rank: 16, suit: "hearts" },
       ];
       playMoves(server, [
         [
-          { rank: 15, suit: "test-suit" },
-          { rank: 15, suit: "test-suit" },
-          { rank: 15, suit: "test-suit" },
-          { rank: 15, suit: "test-suit" },
+          { rank: 15, suit: "hearts" },
+          { rank: 15, suit: "hearts" },
+          { rank: 15, suit: "hearts" },
+          { rank: 15, suit: "hearts" },
         ],
         secondMove,
       ]);
@@ -414,7 +414,7 @@ describe(Server, () => {
     it("current hand in play is reset if 2 players pass in a row", () => {
       const server = createTestPlayServer();
 
-      playMoves(server, [[{ rank: 15, suit: "test-suit" }], "pass", "pass"]);
+      playMoves(server, [[{ rank: 15, suit: "hearts" }], "pass", "pass"]);
       expect(server.gameState.currentHand).toStrictEqual([]);
     });
 
@@ -423,12 +423,12 @@ describe(Server, () => {
       const onEnd = vi.fn();
       server.on("gameOver", onEnd);
 
-      getPrevPlayer(server).hand = [{ rank: 12, suit: "test-suit" }];
+      getPrevPlayer(server).hand = [{ rank: 12, suit: "hearts" }];
 
       expect(onEnd).toHaveBeenCalledTimes(0);
       playMoves(
         server,
-        ["pass", "pass", [{ rank: 12, suit: "test-suit" }]],
+        ["pass", "pass", [{ rank: 12, suit: "hearts" }]],
         false
       );
       expect(onEnd).toHaveBeenCalledTimes(1);
@@ -443,11 +443,11 @@ describe(Server, () => {
         const { landlordIndex } = server.gameState;
         expect(server.gameState.currentPlayerIndex).toBe(landlordIndex);
         server.gameState.players[landlordIndex].hand = [
-          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "hearts" },
         ];
         server.play({
           type: "playMove",
-          move: [{ rank: 3, suit: "test-suit" }],
+          move: [{ rank: 3, suit: "hearts" }],
         });
 
         const { payments } = server.scoreLedger;
@@ -469,11 +469,11 @@ describe(Server, () => {
 
         const secondPlayer = server.gameState.currentPlayerIndex;
         server.gameState.players[server.gameState.currentPlayerIndex].hand = [
-          { rank: 3, suit: "test-suit" },
+          { rank: 3, suit: "hearts" },
         ];
         server.play({
           type: "playMove",
-          move: [{ rank: 3, suit: "test-suit" }],
+          move: [{ rank: 3, suit: "hearts" }],
         });
 
         const { payments } = server.scoreLedger;

@@ -1,14 +1,3 @@
-export interface Card {
-  /* Stored in Dou Di Zhu priority order in the range [3,17] where: 
-    - [3, 14] = [3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A]
-    - 15 = 2
-    - 16 = Black Joker
-    - 17 = Red Joker
-  */
-  rank: number;
-  suit: string;
-}
-
 export interface ScoreLedger {
   /**
    * Adjacency matrix of payments to be made between entities:

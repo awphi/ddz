@@ -1,17 +1,50 @@
-import type { Card } from "../types";
-import { countCards, groupCards, isSequential } from "../utils";
-import type { Hand, Move } from "./types";
+import {
+  countValues,
+  groupCountedValues,
+  isSequential,
+  shuffleArray,
+} from "../utils";
+import type { Hand, Move, Card } from "./types";
 
 // Core DDZ utils consumed by either the client and/or the server. Exported for testability and not part of the public API.
 
+const suits = ["hearts", "diamonds", "clubs", "spades"] as const;
+
+/**
+ * Create a standard 54 card deck for Dou Di Zhu.
+ * @returns a shuffled array of cards
+ */
+export function createDeck(): Card[] {
+  const deck: Card[] = [];
+
+  for (let rank = 3; rank <= 15; rank++) {
+    for (const suit of suits) {
+      deck.push({ rank, suit });
+    }
+  }
+
+  for (let rank = 16; rank <= 17; rank++) {
+    deck.push({ rank, suit: "joker" });
+  }
+
+  shuffleArray(deck);
+  return deck;
+}
+
+/**
+ * Identify the type of hand a given set of cards represents.
+ * @param cards the cards to check
+ * @returns the hand type of the cards or null if it's not a valid hand
+ */
 export function identifyHand(cards: Card[]): Hand | null {
   if (cards.length === 0) {
     return null;
   }
 
-  const ranks = countCards(cards); // rank -> # of cards of that rank
+  const cardRanks = cards.map((v) => v.rank);
+  const ranks = countValues(cardRanks); // rank -> # of cards of that rank
   const uniqueRanks = Object.keys(ranks).map(Number);
-  const groups = groupCards(cards); // # of cards -> list of unique ranks with that group size
+  const groups = groupCountedValues(cardRanks); // # of cards -> list of unique ranks with that group size
   const uniqueGroups = Object.keys(groups).map(Number);
   const maxRank = Math.max(...uniqueRanks);
   const nRanks = Object.keys(ranks).length;

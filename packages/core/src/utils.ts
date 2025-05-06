@@ -1,25 +1,37 @@
-import type { Card, ScoreLedger } from "./types";
+import type { ScoreLedger } from "./types";
 
 // General purpose card game and/or misc. utils available for use in @ddz/core
 
+/**
+ * General-purpose true modulo operation.
+ */
 export function mod(n: number, m: number): number {
   return ((n % m) + m) % m;
 }
 
-export function countCards(cards: Card[]): Record<number, number> {
+/**
+ * Count the number of instances of each value in array.
+ * @param values the array of values to count
+ * @returns a record mapping value -> count
+ */
+export function countValues(values: number[]): Record<number, number> {
   const result: Record<number, number> = {};
-  for (const card of cards) {
-    result[card.rank] = (result[card.rank] ?? 0) + 1;
+  for (const val of values) {
+    result[val] = (result[val] ?? 0) + 1;
   }
   return result;
 }
 
-export function groupCards(cards: Card[]): Record<number, number[]> {
-  const counts = countCards(cards);
+/**
+ * Count the number of instances of each value in array and then invert the map it produces.
+ * @param values the array of values to count
+ * @returns a record mapping count -> array of unique values that had that many instances in the source array
+ */
+export function groupCountedValues(values: number[]): Record<number, number[]> {
+  const counts = countValues(values);
   const result: Record<number, number[]> = {};
 
-  // result[i] will be sorted by virtue of the keys of the object returned by countCards()
-  // being ordered by JS
+  // result[i] will be sorted by virtue of the keys of the object returned by countItems() being ordered by JS
   for (const [rank, count] of Object.entries(counts)) {
     if (!(count in result)) {
       result[count] = [];
@@ -34,58 +46,27 @@ export function isSequential(arr: number[]): boolean {
   return arr.every((v, i) => i === 0 || v === arr[i - 1] + 1);
 }
 
-// TODO test these options - ordering w/ multi-decks and joker exclusion specifically
-interface CreateDeckOptions {
-  includeJokers?: boolean;
-  shuffle?: boolean;
-  numberOfDecks?: number;
-}
-
-export function createDeck({
-  includeJokers = true,
-  shuffle = true,
-  numberOfDecks = 1,
-}: CreateDeckOptions | undefined = {}): Card[] {
-  const suits = ["hearts", "diamonds", "clubs", "spades"];
-  const deck: Card[] = [];
-
-  for (let rank = 3; rank <= 15; rank++) {
-    for (const suit of suits) {
-      for (let i = 0; i < numberOfDecks; i++) {
-        deck.push({ rank, suit });
-      }
-    }
+export function shuffleArray(arr: any[]): void {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-
-  if (includeJokers) {
-    for (let rank = 16; rank <= 17; rank++) {
-      for (let i = 0; i < numberOfDecks; i++) {
-        deck.push({ rank, suit: "joker" });
-      }
-    }
-  }
-
-  if (shuffle) {
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-  }
-  return deck;
 }
 
 /**
- * Removes cards specified in a toRemove array from a hand array in-place
- * based on compare-by-value.
+ * Removes items specified in a toRemove array from an array in-place
+ * using compare-by-value.
+ * @param arr array to attempt to mutate in place
+ * @param toRemove items to remove from `arr`
  */
-export function removeCards(hand: Card[], toRemove: Card[]): boolean {
-  for (const card of toRemove) {
-    const idx = hand.findIndex((otherCard) => shallowEqual(card, otherCard));
+export function popSubarray<T>(arr: T[], toRemove: T[]): boolean {
+  for (const v of toRemove) {
+    const idx = arr.findIndex((otherCard) => shallowEqual(v, otherCard));
     if (idx === -1) {
       return false;
     }
 
-    hand.splice(idx, 1);
+    arr.splice(idx, 1);
   }
 
   return true;

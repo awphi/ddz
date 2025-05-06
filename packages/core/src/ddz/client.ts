@@ -6,7 +6,7 @@ import type {
   Player,
   PlayMoveMessage,
 } from "./types";
-import { removeCards } from "../utils";
+import { popSubarray } from "../utils";
 
 // Public DDZ client API
 
@@ -43,7 +43,7 @@ export function isValidMoveMessage(
 
   // take a shallow clone we can mutate to test the player has these cards
   const playerHand = [...gameState.players[gameState.currentPlayerIndex].hand];
-  if (!removeCards(playerHand, newHand)) {
+  if (!popSubarray(playerHand, newHand)) {
     return false;
   }
 
