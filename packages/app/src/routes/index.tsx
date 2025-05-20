@@ -10,11 +10,50 @@ import {
   Tooltip,
 } from "@radix-ui/themes";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
+
+const GAME_CARDS: GameCardProps[] = [
+  {
+    id: "doudizhu",
+    title: "👑 Dou Di Zhu (Fight the Landlord) (斗地主)",
+    desc: "Popular 3-player climbing card game. Simple, fun and balanced!",
+    origin: "Hubei, China 🇨🇳",
+    players: "3 (2v1)",
+    cards: "54",
+  },
+  {
+    id: "guandan",
+    title: "🥚 Guan Dan (Throwing Eggs) (掼蛋)",
+    desc: "The most popular climbing card game in China. Features significant tactical depth and co-operative elements.",
+    origin: "Jiangsu, China 🇨🇳",
+    players: "4 (2v2)",
+    cards: "108",
+    disabled: true,
+  },
+  {
+    id: "ride-the-bus",
+    title: "🚌 Ride the Bus",
+    desc: "Simple draw and discard game played in the USA and UK with many regional variations.",
+    origin: "England 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    players: "2-9",
+    cards: "52",
+    disabled: true,
+  },
+];
+
+interface GameCardProps {
+  id: string;
+  title: string;
+  desc: string;
+  origin: string;
+  players: string;
+  cards: string;
+  disabled?: boolean;
+}
 
 function GameCard({
   id,
@@ -24,16 +63,8 @@ function GameCard({
   players,
   cards,
   disabled = false,
-}: {
-  id: string;
-  title: string;
-  desc: string;
-  origin: string;
-  players: string;
-  cards: string;
-  disabled?: boolean;
-}) {
-  return (
+}: GameCardProps) {
+  const card = (
     <RadioCards.Item value={id} disabled={disabled}>
       <Flex gap="2" direction="column">
         <Heading size="4">{title}</Heading>
@@ -56,6 +87,16 @@ function GameCard({
       </Flex>
     </RadioCards.Item>
   );
+
+  if (disabled) {
+    return (
+      <Tooltip content="Coming soon!" disableHoverableContent={true}>
+        {card}
+      </Tooltip>
+    );
+  }
+
+  return card;
 }
 
 function Index() {
@@ -81,46 +122,24 @@ function Index() {
       <ScrollArea style={{ flex: 1 }} type="auto" scrollbars="vertical">
         <RadioCards.Root onValueChange={setSelectedGame}>
           <Flex direction="column" pr="4" gap="2">
-            <GameCard
-              id="doudizhu"
-              title="👑 Dou Di Zhu (Fight the Landlord) (斗地主)"
-              desc="Popular 3-player climbing card game. Simple, fun and balanced!"
-              origin="Hubei, China 🇨🇳"
-              players="3 (2v1)"
-              cards="54"
-            />
-            <GameCard
-              id="guandan"
-              title="🥚 Guan Dan (Throwing Eggs) (掼蛋)"
-              desc="The most popular climbing card game in China. Features significant tactical depth and co-operative elements."
-              origin="Jiangsu, China 🇨🇳"
-              players="4 (2v2)"
-              cards="108"
-              disabled={true}
-            />
-            <GameCard
-              id="ride-the-bus"
-              title="🚌 Ride the Bus"
-              desc="Simple draw and discard game played in the USA and UK with many regional variations."
-              origin="England 🏴󠁧󠁢󠁥󠁮󠁧󠁿"
-              players="2-9"
-              cards="52"
-              disabled={true}
-            />
+            {GAME_CARDS.map((game) => (
+              <GameCard {...game} key={game.id} />
+            ))}
           </Flex>
         </RadioCards.Root>
       </ScrollArea>
       <Flex gap="2">
-        {/* TODO these should probably be links as they will invoke navigation */}
         <Tooltip content="Coming soon!" disableHoverableContent={true}>
           <Button style={{ flex: 1 }} disabled={true}>
             🚀 Play online
           </Button>
         </Tooltip>
+        {/* TODO link to /lobby/${selectedGame} */}
         <Button
           style={{ flex: 1 }}
           disabled={selectedGame === null}
           color="green"
+          asChild
         >
           📱 Play locally
         </Button>
